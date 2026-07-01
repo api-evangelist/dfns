@@ -1,0 +1,92 @@
+aid: dfns
+name: Dfns
+review:
+  question: Does Dfns expose a documented public WebSocket API?
+  answer: false
+  date: '2026-07-01'
+  reviewer: API Evangelist
+  asyncapiSpecCreated: false
+  asyncapiScopeNote: |
+    Dfns delivers asynchronous, event-driven notifications via outbound HTTPS
+    webhooks (POST callbacks to a customer-registered URL), not via a
+    WebSocket, SSE, or other client-subscribed streaming transport. Outbound
+    webhooks are modeled as a REST resource in this catalog (Dfns Webhooks
+    API) rather than as an AsyncAPI channel, so no AsyncAPI document was
+    authored.
+findings:
+  summary: |
+    Dfns does not publish a documented public WebSocket API. The Dfns platform
+    is a REST (HTTPS) API rooted at https://api.dfns.io (with a UAE region at
+    https://api.uae.dfns.io). All documented endpoints - wallets, keys,
+    transfers, transactions, signatures, the policy engine, permissions, auth
+    (including User Action Signing), service accounts, and networks - are
+    request/response HTTPS REST calls. Asynchronous state changes (transfer
+    broadcast, signature completion, policy approval, wallet events) are
+    surfaced to integrators through outbound HTTPS webhooks that Dfns POSTs to a
+    registered URL, plus polling the relevant GET endpoints. No realtime,
+    bidirectional WebSocket (ws:// or wss://) endpoint is documented.
+  transports:
+    - protocol: REST
+      scheme: https
+      baseURL: https://api.dfns.io
+      documented: true
+    - protocol: Webhook
+      scheme: https
+      note: Outbound HTTPS POST callbacks to a customer-registered URL for wallet, transfer, transaction, signature, and policy events. Not WebSocket.
+      documented: true
+    - protocol: WebSocket
+      scheme: wss
+      documented: false
+      note: No WebSocket endpoint is documented anywhere in the Dfns API reference or product docs as of the review date.
+  endpointsConfirmedRest:
+    - POST https://api.dfns.io/wallets
+    - GET  https://api.dfns.io/wallets
+    - GET  https://api.dfns.io/wallets/{walletId}
+    - GET  https://api.dfns.io/wallets/{walletId}/assets
+    - GET  https://api.dfns.io/wallets/{walletId}/nfts
+    - GET  https://api.dfns.io/wallets/{walletId}/history
+    - POST https://api.dfns.io/wallets/{walletId}/transfers
+    - GET  https://api.dfns.io/wallets/{walletId}/transfers
+    - POST https://api.dfns.io/wallets/{walletId}/transactions
+    - GET  https://api.dfns.io/wallets/{walletId}/transactions
+    - POST https://api.dfns.io/keys
+    - GET  https://api.dfns.io/keys
+    - POST https://api.dfns.io/keys/{keyId}/delegate
+    - POST https://api.dfns.io/keys/{keyId}/signatures
+    - GET  https://api.dfns.io/keys/{keyId}/signatures
+    - POST https://api.dfns.io/v2/policies
+    - GET  https://api.dfns.io/v2/policies
+    - GET  https://api.dfns.io/v2/policy-approvals
+    - POST https://api.dfns.io/v2/policy-approvals/{approvalId}/decisions
+    - POST https://api.dfns.io/webhooks
+    - GET  https://api.dfns.io/webhooks/{webhookId}/events
+    - POST https://api.dfns.io/permissions
+    - POST https://api.dfns.io/auth/action/init
+    - POST https://api.dfns.io/auth/action
+    - POST https://api.dfns.io/auth/login
+    - POST https://api.dfns.io/auth/login/delegated
+    - GET  https://api.dfns.io/auth/service-accounts
+    - POST https://api.dfns.io/auth/service-accounts
+    - GET  https://api.dfns.io/networks/fees
+    - POST https://api.dfns.io/networks/{network}/call-function
+sources:
+  - url: https://docs.dfns.co/
+    type: Documentation
+    note: API basics list the REST base URL https://api.dfns.io; no WebSocket mentioned.
+  - url: https://docs.dfns.co/openapi.yaml
+    type: OpenAPI
+    note: Official Dfns OpenAPI 3.1 spec (title "Dfns"); all paths are HTTPS REST.
+  - url: https://docs.dfns.co/d/api-docs/webhooks
+    type: Documentation
+    note: Event delivery is via outbound HTTPS webhooks, not a client-subscribed stream.
+  - url: https://docs.dfns.co/d/api-docs/authentication/user-action-signing
+    type: Documentation
+    note: Sensitive mutations use a User Action Signing challenge/complete flow over REST.
+actions:
+  asyncapiPath: null
+  apisYmlUpdated: true
+  reason: |
+    No WebSocket protocol surface exists. Event-driven notifications are
+    delivered via outbound HTTPS webhooks, which are catalogued as a REST
+    resource (Dfns Webhooks API) rather than as an AsyncAPI channel, so no
+    AsyncAPI document was created.

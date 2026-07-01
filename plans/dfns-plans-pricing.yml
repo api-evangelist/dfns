@@ -1,0 +1,125 @@
+specification: API Commons Plans
+specificationVersion: '0.1'
+schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/Plans
+provider: Dfns
+providerId: dfns
+created: '2026-07-01'
+modified: '2026-07-01'
+reconciled: false
+tags:
+- Wallets
+- MPC
+- Key Management
+- Digital Assets
+- Web3
+- Plans
+description: >-
+  Dfns is a wallet-as-a-service and MPC key-management infrastructure provider
+  sold to businesses (fintechs, exchanges, custodians, neobanks, enterprises).
+  Dfns publishes an entry-level self-serve Starter plan with a 30-day free
+  trial and no AUM or transaction fees, then scales up to volume-based Growth
+  and sales-quoted Enterprise/institutional plans. Enterprise pricing is scoped
+  by wallet volume, supported blockchains, deployment model (multi-tenant SaaS
+  vs. dedicated/isolated), SLA tier, and support level, and requires contacting
+  sales. Dfns does not publish public per-call/per-API pricing.
+notes: >-
+  Entry-tier figures are advertised on the Dfns pricing page (Starter around
+  $50/month, plans starting around $60/month, 30-day free trial, no AUM or
+  transaction fees, per-wallet cost declining with volume, billed via
+  Stripe/Lago). Enterprise pricing is contact-sales. Verify tier names,
+  amounts, and inclusions against the current Dfns pricing page during
+  reconciliation.
+sources:
+- https://www.dfns.co/
+- https://www.dfns.co/pricing
+- https://www.dfns.co/article/introducing-the-starter-plan
+- https://docs.dfns.co/
+plans:
+- id: dfns-sandbox
+  name: Sandbox / Free Trial
+  type: free
+  description: >-
+    Free sandbox environment and a 30-day free trial for building and testing
+    an integration against the Dfns API. Includes test wallets on testnet
+    networks and the full API surface.
+  entries:
+  - label: Sandbox / Trial Access
+    name: sandbox
+    type: flat
+    metric: environment
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: free (30-day trial / testnet)
+    userMultiplied: false
+  elements:
+  - name: Wallets (testnet)
+  - name: Keys
+  - name: Signatures
+  - name: Policy Engine
+  - name: Webhooks
+  - name: Service Accounts
+- id: dfns-starter
+  name: Starter
+  type: paid
+  description: >-
+    Self-serve entry plan for teams launching wallet functionality, with a flat
+    monthly platform fee, no AUM or transaction fees, and a per-wallet cost that
+    declines with volume. Billed monthly.
+  entries:
+  - label: Platform Fee
+    name: platform_fee
+    type: flat
+    metric: subscription
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: from ~$50/month (see pricing page)
+    userMultiplied: false
+  - label: Wallets
+    name: wallets
+    type: usage
+    metric: wallets
+    limit: -1
+    timeFrame: month
+    geo: global
+    unit: 1
+    price: per-wallet, declining with volume; no AUM or transaction fees
+    userMultiplied: false
+  elements:
+  - name: Programmable Wallets
+  - name: MPC Key Management
+  - name: Policy Engine and Approvals
+  - name: Delegated Signing
+  - name: Multi-Chain Support
+  - name: Webhooks
+- id: dfns-enterprise
+  name: Enterprise / Dedicated
+  type: enterprise
+  description: >-
+    Dedicated or isolated deployment for regulated institutions - custodians,
+    banks, and exchanges - with enhanced SLAs, dedicated key shares, private
+    networking, compliance support (SOC 2 Type II, ISO 27001), and negotiated
+    volume terms.
+  entries:
+  - label: Enterprise Agreement
+    name: enterprise
+    type: flat
+    metric: contract
+    limit: -1
+    timeFrame: year
+    geo: global
+    unit: 1
+    price: contact sales
+    userMultiplied: false
+  elements:
+  - name: Dedicated Deployment
+  - name: Enhanced SLA
+  - name: Compliance and Audit Support
+  - name: Custom Volume Pricing
+  - name: Priority Support
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com

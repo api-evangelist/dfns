@@ -1,0 +1,128 @@
+specification: FinOps Framework
+specificationVersion: '1.0'
+schema: https://www.finops.org/framework/
+provider: Dfns
+providerId: dfns
+created: '2026-07-01'
+modified: '2026-07-01'
+reconciled: false
+tags:
+- Wallets
+- MPC
+- Key Management
+- Digital Assets
+- Web3
+- FinOps
+- Cost Management
+- FOCUS
+description: >-
+  FinOps view of Dfns spend. Dfns bills a monthly platform fee (from an
+  entry-level Starter plan up to sales-quoted Enterprise) with no AUM or
+  transaction fees; per-wallet cost declines with volume. Cost scales with the
+  number of wallets under management, the plan tier, the set of enabled
+  blockchain networks, and the deployment model (multi-tenant vs. dedicated).
+  On-chain gas/network fees are paid separately by the customer to the
+  underlying blockchains and are not part of the Dfns platform fee.
+notes: >-
+  Entry-tier pricing is public (Starter ~$50/mo, plans from ~$60/mo, 30-day
+  trial, no AUM/tx fees); enterprise is negotiated. The meters below describe
+  what Dfns usage can be allocated and tracked on for internal FinOps. Verify
+  billing dimensions against the Dfns pricing page and MSA during
+  reconciliation.
+sources:
+- https://www.dfns.co/
+- https://www.dfns.co/pricing
+- https://docs.dfns.co/
+- https://focus.finops.org/focus-specification/v1-3/
+alignedWith:
+  framework: FinOps Foundation Framework
+  frameworkUrl: https://www.finops.org/framework/
+  dataSpec: FOCUS
+  dataSpecVersion: '1.3'
+  dataSpecUrl: https://focus.finops.org/focus-specification/v1-3/
+publisherName: Dfns
+serviceCategory: Blockchain and Digital Asset Infrastructure
+billingModel:
+  pricingCategory: Subscription
+  billingFrequency: Monthly
+  billingCurrency: USD
+  chargeCategories:
+  - Usage
+  - Purchase
+  - Adjustment
+focusColumns:
+  ServiceName: Dfns Wallet-as-a-Service
+  ServiceCategory: Blockchain and Digital Asset Infrastructure
+  ProviderName: Dfns
+  PublisherName: Dfns
+  InvoiceIssuerName: Dfns
+  BillingCurrency: USD
+  ChargeCategory: Usage
+  PricingCategory: Subscription
+meters:
+- name: platform_fee
+  description: Monthly Dfns platform subscription fee for the plan tier.
+  unit: subscription
+  aggregation: sum
+  dimensions:
+  - organization
+- name: wallets_under_management
+  description: Count of wallets provisioned/managed via the Dfns platform.
+  unit: wallets
+  aggregation: max
+  dimensions:
+  - organization
+  - application
+  - network
+- name: signatures
+  description: Signature-generation operations performed by the MPC signers (wallet or raw key).
+  unit: signatures
+  aggregation: sum
+  dimensions:
+  - organization
+  - wallet
+  - network
+- name: transactions_broadcast
+  description: Transactions built and broadcast to blockchain networks from Dfns wallets.
+  unit: transactions
+  aggregation: sum
+  dimensions:
+  - organization
+  - wallet
+  - network
+- name: enabled_networks
+  description: Number of blockchain networks enabled for the organization.
+  unit: networks
+  aggregation: max
+  dimensions:
+  - organization
+- name: api_requests
+  description: API requests against the Dfns REST API surface.
+  unit: requests
+  aggregation: sum
+  dimensions:
+  - organization
+  - application
+- name: onchain_network_fees
+  description: >-
+    Gas / network fees paid to the underlying blockchains for broadcast
+    transactions. Paid by the customer directly, external to the Dfns platform
+    fee, but tracked here for total cost of ownership.
+  unit: native_currency
+  aggregation: sum
+  dimensions:
+  - organization
+  - wallet
+  - network
+principles:
+- name: Visibility
+  description: Attribute wallets, signatures, and transactions per application/team; separate Dfns platform fees from on-chain gas.
+- name: Allocation
+  description: Tag applications and service accounts per product line and map to internal cost centers.
+- name: Optimization
+  description: Consolidate enabled networks to those actually used; batch/schedule broadcasts to manage gas; use the sandbox for non-production work.
+- name: Accountability
+  description: Assign owners per application/service account; review wallet growth, signature volume, and gas spend against budget.
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com

@@ -1,0 +1,357 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Dfns API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Wallets",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Create Wallet", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/wallets", "body": { "type": "json", "data": "{}" } },
+          "docs": "Create a programmable non-custodial wallet on a blockchain network. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Wallets", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets" },
+          "docs": "List wallets in the organization."
+        },
+        {
+          "info": { "name": "Get Wallet", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets/:walletId", "params": [ { "name": "walletId", "value": "", "type": "path" } ] },
+          "docs": "Get a wallet by id."
+        },
+        {
+          "info": { "name": "Get Wallet Assets", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets/:walletId/assets", "params": [ { "name": "walletId", "value": "", "type": "path" } ] },
+          "docs": "Get a wallet's asset balances."
+        },
+        {
+          "info": { "name": "Get Wallet Nfts", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets/:walletId/nfts", "params": [ { "name": "walletId", "value": "", "type": "path" } ] },
+          "docs": "Get a wallet's NFTs."
+        },
+        {
+          "info": { "name": "Get Wallet History", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets/:walletId/history", "params": [ { "name": "walletId", "value": "", "type": "path" } ] },
+          "docs": "Get a wallet's on-chain history."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Transfers",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Transfer Asset", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/wallets/:walletId/transfers", "params": [ { "name": "walletId", "value": "", "type": "path" } ], "body": { "type": "json", "data": "{}" } },
+          "docs": "Transfer a native, token, or NFT asset from a wallet. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Transfers", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets/:walletId/transfers", "params": [ { "name": "walletId", "value": "", "type": "path" } ] },
+          "docs": "List transfer requests for a wallet."
+        },
+        {
+          "info": { "name": "Get Transfer", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets/:walletId/transfers/:transferId", "params": [ { "name": "walletId", "value": "", "type": "path" }, { "name": "transferId", "value": "", "type": "path" } ] },
+          "docs": "Get a transfer request by id."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Transactions",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Sign and Broadcast Transaction", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/wallets/:walletId/transactions", "params": [ { "name": "walletId", "value": "", "type": "path" } ], "body": { "type": "json", "data": "{}" } },
+          "docs": "Sign and broadcast a caller-supplied transaction from a wallet. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Transactions", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets/:walletId/transactions", "params": [ { "name": "walletId", "value": "", "type": "path" } ] },
+          "docs": "List transaction requests for a wallet."
+        },
+        {
+          "info": { "name": "Get Transaction", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/wallets/:walletId/transactions/:transactionId", "params": [ { "name": "walletId", "value": "", "type": "path" }, { "name": "transactionId", "value": "", "type": "path" } ] },
+          "docs": "Get a transaction request by id."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Keys",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Create Key", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/keys", "body": { "type": "json", "data": "{}" } },
+          "docs": "Create a standalone MPC key. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Keys", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/keys" },
+          "docs": "List keys in the organization."
+        },
+        {
+          "info": { "name": "Get Key", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/keys/:keyId", "params": [ { "name": "keyId", "value": "", "type": "path" } ] },
+          "docs": "Get a key by id."
+        },
+        {
+          "info": { "name": "Delegate Key", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/keys/:keyId/delegate", "params": [ { "name": "keyId", "value": "", "type": "path" } ], "body": { "type": "json", "data": "{}" } },
+          "docs": "Delegate a key to an end user for non-custodial delegated signing. Requires a User Action Signature."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Signatures",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Generate Signature", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/keys/:keyId/signatures", "params": [ { "name": "keyId", "value": "", "type": "path" } ], "body": { "type": "json", "data": "{}" } },
+          "docs": "Generate a raw signature from a key. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Signatures", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/keys/:keyId/signatures", "params": [ { "name": "keyId", "value": "", "type": "path" } ] },
+          "docs": "List signature requests for a key."
+        },
+        {
+          "info": { "name": "Get Signature", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/keys/:keyId/signatures/:signatureId", "params": [ { "name": "keyId", "value": "", "type": "path" }, { "name": "signatureId", "value": "", "type": "path" } ] },
+          "docs": "Get a signature request by id."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Policies",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Create Policy", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/v2/policies", "body": { "type": "json", "data": "{}" } },
+          "docs": "Create a policy in the policy engine. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Policies", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/v2/policies" },
+          "docs": "List policies."
+        },
+        {
+          "info": { "name": "Get Policy", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/v2/policies/:policyId", "params": [ { "name": "policyId", "value": "", "type": "path" } ] },
+          "docs": "Get a policy by id."
+        },
+        {
+          "info": { "name": "Update Policy", "type": "http" },
+          "http": { "method": "PUT", "url": "https://api.dfns.io/v2/policies/:policyId", "params": [ { "name": "policyId", "value": "", "type": "path" } ], "body": { "type": "json", "data": "{}" } },
+          "docs": "Update a policy. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "Archive Policy", "type": "http" },
+          "http": { "method": "DELETE", "url": "https://api.dfns.io/v2/policies/:policyId", "params": [ { "name": "policyId", "value": "", "type": "path" } ] },
+          "docs": "Archive (delete) a policy. Requires a User Action Signature."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Approvals",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "List Approvals", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/v2/policy-approvals" },
+          "docs": "List approvals awaiting or resolved by decision makers."
+        },
+        {
+          "info": { "name": "Get Approval", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/v2/policy-approvals/:approvalId", "params": [ { "name": "approvalId", "value": "", "type": "path" } ] },
+          "docs": "Get an approval by id."
+        },
+        {
+          "info": { "name": "Create Approval Decision", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/v2/policy-approvals/:approvalId/decisions", "params": [ { "name": "approvalId", "value": "", "type": "path" } ], "body": { "type": "json", "data": "{}" } },
+          "docs": "Approve or deny a pending approval. Requires a User Action Signature."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Webhooks",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Create Webhook", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/webhooks", "body": { "type": "json", "data": "{}" } },
+          "docs": "Register an HTTPS webhook. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Webhooks", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/webhooks" },
+          "docs": "List webhooks."
+        },
+        {
+          "info": { "name": "Get Webhook", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/webhooks/:webhookId", "params": [ { "name": "webhookId", "value": "", "type": "path" } ] },
+          "docs": "Get a webhook by id."
+        },
+        {
+          "info": { "name": "Ping Webhook", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/webhooks/:webhookId/ping", "params": [ { "name": "webhookId", "value": "", "type": "path" } ] },
+          "docs": "Send a test event to a webhook."
+        },
+        {
+          "info": { "name": "List Webhook Events", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/webhooks/:webhookId/events", "params": [ { "name": "webhookId", "value": "", "type": "path" } ] },
+          "docs": "List the event delivery log for a webhook."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Permissions",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Create Permission", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/permissions", "body": { "type": "json", "data": "{}" } },
+          "docs": "Create a permission. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Permissions", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/permissions" },
+          "docs": "List permissions."
+        },
+        {
+          "info": { "name": "Get Permission", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/permissions/:permissionId", "params": [ { "name": "permissionId", "value": "", "type": "path" } ] },
+          "docs": "Get a permission by id."
+        },
+        {
+          "info": { "name": "Assign Permission", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/permissions/:permissionId/assignments", "params": [ { "name": "permissionId", "value": "", "type": "path" } ], "body": { "type": "json", "data": "{}" } },
+          "docs": "Assign a permission to a user, service account, or PAT. Requires a User Action Signature."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Auth",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Create User Action Challenge", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/auth/action/init", "body": { "type": "json", "data": "{}" } },
+          "docs": "Initialize a User Action Signing challenge for a sensitive operation."
+        },
+        {
+          "info": { "name": "Create User Action Signature", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/auth/action", "body": { "type": "json", "data": "{}" } },
+          "docs": "Complete a User Action Signing challenge and return the X-DFNS-USERACTION value."
+        },
+        {
+          "info": { "name": "Complete User Login", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/auth/login", "body": { "type": "json", "data": "{}" } },
+          "docs": "Exchange signed login credentials for an access token."
+        },
+        {
+          "info": { "name": "Delegated Login", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/auth/login/delegated", "body": { "type": "json", "data": "{}" } },
+          "docs": "Obtain a scoped access token on behalf of an end user. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "List Users", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/auth/users" },
+          "docs": "List users in the organization."
+        },
+        {
+          "info": { "name": "Create User", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/auth/users", "body": { "type": "json", "data": "{}" } },
+          "docs": "Create a user. Requires a User Action Signature."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Service Accounts",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "List Service Accounts", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/auth/service-accounts" },
+          "docs": "List service accounts."
+        },
+        {
+          "info": { "name": "Create Service Account", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/auth/service-accounts", "body": { "type": "json", "data": "{}" } },
+          "docs": "Create a service account and its access token. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "Get Service Account", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/auth/service-accounts/:serviceAccountId", "params": [ { "name": "serviceAccountId", "value": "", "type": "path" } ] },
+          "docs": "Get a service account by id."
+        },
+        {
+          "info": { "name": "Activate Service Account", "type": "http" },
+          "http": { "method": "PUT", "url": "https://api.dfns.io/auth/service-accounts/:serviceAccountId/activate", "params": [ { "name": "serviceAccountId", "value": "", "type": "path" } ] },
+          "docs": "Activate a service account. Requires a User Action Signature."
+        },
+        {
+          "info": { "name": "Deactivate Service Account", "type": "http" },
+          "http": { "method": "PUT", "url": "https://api.dfns.io/auth/service-accounts/:serviceAccountId/deactivate", "params": [ { "name": "serviceAccountId", "value": "", "type": "path" } ] },
+          "docs": "Deactivate a service account. Requires a User Action Signature."
+        }
+      ]
+    },
+    {
+      "info": {
+        "name": "Networks",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": { "name": "Estimate Fees", "type": "http" },
+          "http": { "method": "GET", "url": "https://api.dfns.io/networks/fees", "params": [ { "name": "network", "value": "", "type": "query" } ] },
+          "docs": "Estimate current network fees for a blockchain network."
+        },
+        {
+          "info": { "name": "Call Function", "type": "http" },
+          "http": { "method": "POST", "url": "https://api.dfns.io/networks/:network/call-function", "params": [ { "name": "network", "value": "", "type": "path" } ], "body": { "type": "json", "data": "{}" } },
+          "docs": "Perform a read-only smart contract function call without creating a transaction."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

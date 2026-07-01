@@ -1,0 +1,70 @@
+specification: API Commons Rate Limits
+specificationVersion: '0.1'
+schema: https://raw.githubusercontent.com/api-evangelist/interface-research/main/schema/api-commons.yml#/$defs/RateLimits
+provider: Dfns
+providerId: dfns
+created: '2026-07-01'
+modified: '2026-07-01'
+reconciled: false
+tags:
+- Wallets
+- MPC
+- Key Management
+- Digital Assets
+- Web3
+- Rate Limiting
+- Quotas
+- Throttling
+description: >-
+  The Dfns API enforces per-application and per-organization rate limits to
+  protect the signing and wallet infrastructure. Limits are applied per API
+  path/method class and are heavier on read (list/get) endpoints than on
+  sensitive mutating endpoints that require User Action Signing (transfers,
+  signature generation, policy changes). Specific per-endpoint request-per-
+  second/minute values are governed by the commercial agreement and are not
+  publicly reconciled in this artifact.
+notes: >-
+  Verify concrete numeric limits, burst allowances, and any per-network
+  transaction throughput caps with Dfns during reconciliation; limits vary by
+  commercial tier and deployment model.
+sources:
+- https://docs.dfns.co/
+- https://docs.dfns.co/d/api-docs/api-basics
+responseCodes:
+  throttled: 429
+limits:
+- name: Requests Per Application
+  scope: application
+  metric: requests
+  limit: see provider documentation
+  notes: Aggregate request limit per registered Dfns application, varies by tier.
+- name: Requests Per Organization
+  scope: organization
+  metric: requests
+  limit: see provider documentation
+  notes: Aggregate request limit across an organization's applications and users.
+- name: Signature / Transaction Throughput
+  scope: organization
+  metric: signatures
+  limit: see provider documentation
+  notes: >-
+    Throughput of signing and transaction-broadcast operations; may be shaped
+    per blockchain network and commercial tier.
+- name: Read Endpoints
+  scope: application
+  metric: requests
+  limit: see provider documentation
+  notes: List/get endpoints (wallets, transfers, transactions, events) carry higher limits than mutating endpoints.
+policies:
+- name: Tiered Limits
+  description: Rate limits scale with the commercial agreement and deployment model (SaaS vs. dedicated).
+- name: User Action Signing Gate
+  description: >-
+    Sensitive mutations (transfers, signature generation, key/policy changes)
+    require a User Action Signing challenge/complete flow, which naturally
+    throttles automated abuse of those endpoints.
+- name: Backoff Strategy
+  description: Clients should implement exponential backoff with jitter and honor Retry-After on HTTP 429 responses.
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com

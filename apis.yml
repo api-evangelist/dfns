@@ -1,0 +1,244 @@
+aid: dfns
+url: https://raw.githubusercontent.com/api-evangelist/dfns/refs/heads/main/apis.yml
+name: Dfns
+kind: company
+description: Dfns is a wallet-as-a-service and MPC key-management infrastructure provider.
+  Its API lets businesses create programmable, non-custodial wallets backed by
+  multi-party-computation key shares, sign and broadcast transactions across many
+  blockchains, and govern every action through a programmable policy engine with
+  delegated signing, approvals, and User Action Signing.
+image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+tags:
+- Wallets
+- MPC
+- Key Management
+- Digital Assets
+- Web3
+- Non-Custodial
+created: '2026-07-01'
+modified: '2026-07-01'
+specificationVersion: '0.19'
+apis:
+- aid: dfns:dfns-wallets-api
+  name: Dfns Wallets API
+  tags:
+  - Wallets
+  - Balances
+  - NFTs
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/wallets
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/wallets
+    type: Documentation
+  - url: https://docs.dfns.co/d/api-docs/wallets/api-reference
+    type: APIReference
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Create and manage programmable non-custodial wallets on many blockchain
+    networks, and read wallet addresses, asset balances, NFTs, and on-chain history.
+- aid: dfns:dfns-keys-api
+  name: Dfns Keys API
+  tags:
+  - Keys
+  - MPC
+  - Signing
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/keys
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/keys
+    type: Documentation
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Create and manage standalone MPC keys (scheme/curve) independent of a
+    single network, and generate raw signatures directly from a key.
+- aid: dfns:dfns-transfers-api
+  name: Dfns Transfers API
+  tags:
+  - Transfers
+  - Payments
+  - Broadcast
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/wallets/transfer-asset-from-wallet
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/wallets/transfer-asset-from-wallet
+    type: Documentation
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Initiate native, token (ERC-20/SPL), and NFT transfers from a wallet;
+    Dfns builds, signs, and broadcasts the transaction and tracks its status.
+- aid: dfns:dfns-transactions-api
+  name: Dfns Transactions API
+  tags:
+  - Transactions
+  - Broadcast
+  - Smart Contracts
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/wallets/broadcast-transaction-from-wallet
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/wallets/broadcast-transaction-from-wallet
+    type: Documentation
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Sign and broadcast caller-supplied transactions - including smart
+    contract calls - from a wallet, and list transaction requests and their status.
+- aid: dfns:dfns-signatures-api
+  name: Dfns Signatures API
+  tags:
+  - Signatures
+  - Signing
+  - EIP-712
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/wallets/generate-signature-from-wallet
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/wallets/generate-signature-from-wallet
+    type: Documentation
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Generate signatures (hash, message, EIP-712, transaction, PSBT) from a
+    wallet or key without broadcasting, and retrieve signature request status.
+- aid: dfns:dfns-policy-engine-api
+  name: Dfns Policy Engine and Approvals API
+  tags:
+  - Policy Engine
+  - Approvals
+  - Governance
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/policy-engine
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/policy-engine
+    type: Documentation
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Define policies that govern activities (e.g. signing) with rules and
+    actions (block, request approval), and drive the approval workflow via decisions.
+- aid: dfns:dfns-webhooks-api
+  name: Dfns Webhooks API
+  tags:
+  - Webhooks
+  - Events
+  - Notifications
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/webhooks
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/webhooks
+    type: Documentation
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Register HTTPS webhooks to receive events for wallet, transfer,
+    signature, and policy activity; ping endpoints and inspect the event delivery log.
+- aid: dfns:dfns-permissions-auth-api
+  name: Dfns Permissions and Auth API
+  tags:
+  - Permissions
+  - Auth
+  - User Action Signing
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/authentication
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/authentication
+    type: Documentation
+  - url: https://docs.dfns.co/d/api-docs/authentication/user-action-signing
+    type: APIReference
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Manage permissions and assignments, users, login and delegated login,
+    and the User Action Signing challenge/complete flow that authorizes sensitive
+    operations.
+- aid: dfns:dfns-service-accounts-api
+  name: Dfns Service Accounts API
+  tags:
+  - Service Accounts
+  - Machine Identity
+  - Access Tokens
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/authentication/service-account-management
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/authentication/service-account-management
+    type: Documentation
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Create and manage service accounts (machine identities) and their
+    access tokens for server-to-server API access, including activate/deactivate.
+- aid: dfns:dfns-networks-api
+  name: Dfns Networks API
+  tags:
+  - Networks
+  - Fees
+  - Blockchain Reads
+  image: https://kinlane-images.s3.amazonaws.com/shared/apis-json/apis-json-logo.jpg
+  humanURL: https://docs.dfns.co/d/api-docs/networks
+  baseURL: https://api.dfns.io
+  properties:
+  - url: https://docs.dfns.co/d/api-docs/networks
+    type: Documentation
+  - url: openapi/dfns-openapi.yml
+    type: OpenAPI
+  - url: collections/dfns.postman_collection.json
+    type: PostmanCollection
+  - url: collections/dfns.opencollection.json
+    type: OpenCollection
+  description: Estimate network fees and perform read-only smart contract calls against
+    supported blockchain networks without creating a transaction.
+common:
+- type: GitHubOrganization
+  url: https://github.com/dfns
+- type: LinkedIn
+  url: https://www.linkedin.com/company/dfns
+- type: Website
+  url: https://www.dfns.co/
+- type: Documentation
+  url: https://docs.dfns.co/
+- type: Plans
+  url: plans/dfns-plans-pricing.yml
+- type: RateLimits
+  url: rate-limits/dfns-rate-limits.yml
+- type: FinOps
+  url: finops/dfns-finops.yml
+maintainers:
+- FN: Kin Lane
+  email: kin@apievangelist.com
