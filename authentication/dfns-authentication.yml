@@ -1,0 +1,34 @@
+generated: '2026-07-11'
+method: derived
+source: openapi/dfns-openapi.yml
+summary:
+  types:
+  - apiKey
+  - http
+  api_key_in:
+  - header
+schemes:
+- name: BearerAuth
+  type: http
+  scheme: bearer
+  bearerFormat: JWT
+  description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization:
+    Bearer <token>`.'
+  sources:
+  - openapi/dfns-openapi.yml
+- name: AppId
+  type: apiKey
+  in: header
+  parameter: X-DFNS-APPID
+  description: The Dfns application (app) id the request is made on behalf of.
+  sources:
+  - openapi/dfns-openapi.yml
+- name: UserAction
+  type: apiKey
+  in: header
+  parameter: X-DFNS-USERACTION
+  description: A User Action Signature token proving the caller cryptographically signed the
+    request payload. Required on sensitive mutating operations (transfers, signature generation,
+    key/policy/permission changes).
+  sources:
+  - openapi/dfns-openapi.yml

@@ -225,6 +225,10 @@ apis:
   description: Estimate network fees and perform read-only smart contract calls against
     supported blockchain networks without creating a transaction.
 common:
+- type: DomainSecurity
+  url: security/dfns-domain-security.yml
+- type: Authentication
+  url: authentication/dfns-authentication.yml
 - type: GitHubOrganization
   url: https://github.com/dfns
 - type: LinkedIn
