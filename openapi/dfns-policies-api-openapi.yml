@@ -1,0 +1,171 @@
+openapi: 3.0.1
+info:
+  title: Dfns Approvals Policies API
+  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+- url: https://api.dfns.io
+  description: Dfns production REST API (Europe / default)
+- url: https://api.uae.dfns.io
+  description: Dfns production REST API (UAE region)
+security:
+- BearerAuth: []
+  AppId: []
+tags:
+- name: Policies
+  description: Policy engine rules and approval decisions.
+paths:
+  /v2/policies:
+    post:
+      operationId: createPolicy
+      tags:
+      - Policies
+      summary: Create a policy
+      description: Creates a policy in the policy engine that governs an activity kind (e.g. Wallets:Sign) with a rule and an action (Block, RequestApproval, NoOp). Requires a User Action Signature.
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Policy'
+      responses:
+        '200':
+          description: The created policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    get:
+      operationId: listPolicies
+      tags:
+      - Policies
+      summary: List policies
+      responses:
+        '200':
+          description: A list of policies.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Policy'
+  /v2/policies/{policyId}:
+    get:
+      operationId: getPolicy
+      tags:
+      - Policies
+      summary: Get a policy by id
+      parameters:
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    put:
+      operationId: updatePolicy
+      tags:
+      - Policies
+      summary: Update a policy
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      parameters:
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Policy'
+      responses:
+        '200':
+          description: The updated policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    delete:
+      operationId: archivePolicy
+      tags:
+      - Policies
+      summary: Archive (delete) a policy
+      description: Archives a policy so it no longer governs activities.
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      parameters:
+      - in: path
+        name: policyId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The archived policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+components:
+  schemas:
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        activityKind:
+          type: string
+          example: Wallets:Sign
+        rule:
+          type: object
+        action:
+          type: object
+        status:
+          type: string
+          enum:
+          - Active
+          - Archived
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).

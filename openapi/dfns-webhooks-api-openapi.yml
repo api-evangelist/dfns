@@ -1,0 +1,215 @@
+openapi: 3.0.1
+info:
+  title: Dfns Approvals Webhooks API
+  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+- url: https://api.dfns.io
+  description: Dfns production REST API (Europe / default)
+- url: https://api.uae.dfns.io
+  description: Dfns production REST API (UAE region)
+security:
+- BearerAuth: []
+  AppId: []
+tags:
+- name: Webhooks
+  description: Event webhooks and delivery logs.
+paths:
+  /webhooks:
+    post:
+      operationId: createWebhook
+      tags:
+      - Webhooks
+      summary: Create a webhook
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - url
+              - events
+              properties:
+                url:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: The created webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    get:
+      operationId: listWebhooks
+      tags:
+      - Webhooks
+      summary: List webhooks
+      responses:
+        '200':
+          description: A list of webhooks.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Webhook'
+  /webhooks/{webhookId}:
+    get:
+      operationId: getWebhook
+      tags:
+      - Webhooks
+      summary: Get a webhook by id
+      parameters:
+      - in: path
+        name: webhookId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    put:
+      operationId: updateWebhook
+      tags:
+      - Webhooks
+      summary: Update a webhook
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      parameters:
+      - in: path
+        name: webhookId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+      responses:
+        '200':
+          description: The updated webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    delete:
+      operationId: deleteWebhook
+      tags:
+      - Webhooks
+      summary: Delete a webhook
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      parameters:
+      - in: path
+        name: webhookId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The webhook was deleted.
+  /webhooks/{webhookId}/ping:
+    post:
+      operationId: pingWebhook
+      tags:
+      - Webhooks
+      summary: Ping a webhook
+      description: Sends a test event to the webhook to verify connectivity.
+      parameters:
+      - in: path
+        name: webhookId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The ping result (delivered status and response code).
+          content:
+            application/json:
+              schema:
+                type: object
+  /webhooks/{webhookId}/events:
+    get:
+      operationId: listWebhookEvents
+      tags:
+      - Webhooks
+      summary: List webhook events
+      parameters:
+      - in: path
+        name: webhookId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The delivery log of events for the webhook.
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+          enum:
+          - Enabled
+          - Disabled
+        events:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).

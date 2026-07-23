@@ -1,0 +1,110 @@
+openapi: 3.0.1
+info:
+  title: Dfns Approvals Networks API
+  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+- url: https://api.dfns.io
+  description: Dfns production REST API (Europe / default)
+- url: https://api.uae.dfns.io
+  description: Dfns production REST API (UAE region)
+security:
+- BearerAuth: []
+  AppId: []
+tags:
+- name: Networks
+  description: Network fee estimates and read-only blockchain calls.
+paths:
+  /networks/fees:
+    get:
+      operationId: getNetworkFees
+      tags:
+      - Networks
+      summary: Estimate network fees
+      description: Returns a current fee estimate (e.g. EIP-1559 maxFeePerGas / maxPriorityFeePerGas) for a given blockchain network.
+      parameters:
+      - in: query
+        name: network
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The fee estimate for the network.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  network:
+                    type: string
+                  kind:
+                    type: string
+                  estimatedFees:
+                    type: object
+  /networks/{network}/call-function:
+    post:
+      operationId: callFunction
+      tags:
+      - Networks
+      summary: Read from a smart contract (call function)
+      description: Performs a read-only (eth_call style) function call against a contract on a network without creating a transaction.
+      parameters:
+      - in: path
+        name: network
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - kind
+              - contract
+              - data
+              properties:
+                kind:
+                  type: string
+                  example: Evm
+                contract:
+                  type: string
+                data:
+                  type: string
+      responses:
+        '200':
+          description: The decoded/raw contract read result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                  data:
+                    type: string
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).

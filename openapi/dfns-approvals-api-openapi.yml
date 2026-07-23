@@ -1,0 +1,137 @@
+openapi: 3.0.1
+info:
+  title: Dfns Approvals API
+  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+- url: https://api.dfns.io
+  description: Dfns production REST API (Europe / default)
+- url: https://api.uae.dfns.io
+  description: Dfns production REST API (UAE region)
+security:
+- BearerAuth: []
+  AppId: []
+tags:
+- name: Approvals
+  description: Approval workflow driven by the policy engine.
+paths:
+  /v2/policy-approvals:
+    get:
+      operationId: listApprovals
+      tags:
+      - Approvals
+      summary: List approvals
+      responses:
+        '200':
+          description: A list of approvals awaiting or resolved by decision makers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Approval'
+  /v2/policy-approvals/{approvalId}:
+    get:
+      operationId: getApproval
+      tags:
+      - Approvals
+      summary: Get an approval by id
+      parameters:
+      - in: path
+        name: approvalId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The approval.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+  /v2/policy-approvals/{approvalId}/decisions:
+    post:
+      operationId: createApprovalDecision
+      tags:
+      - Approvals
+      summary: Create an approval decision (approve or deny)
+      description: Records an Approved or Denied decision on a pending approval. Requires a User Action Signature.
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      parameters:
+      - in: path
+        name: approvalId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - value
+              properties:
+                value:
+                  type: string
+                  enum:
+                  - Approved
+                  - Denied
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: The updated approval.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+components:
+  schemas:
+    Approval:
+      type: object
+      properties:
+        id:
+          type: string
+        activityId:
+          type: string
+        status:
+          type: string
+          enum:
+          - Pending
+          - Approved
+          - Denied
+          - AutoApproved
+          - Expired
+        decisions:
+          type: array
+          items:
+            type: object
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).

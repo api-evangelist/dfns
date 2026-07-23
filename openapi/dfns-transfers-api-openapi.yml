@@ -1,0 +1,163 @@
+openapi: 3.0.1
+info:
+  title: Dfns Approvals Transfers API
+  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+- url: https://api.dfns.io
+  description: Dfns production REST API (Europe / default)
+- url: https://api.uae.dfns.io
+  description: Dfns production REST API (UAE region)
+security:
+- BearerAuth: []
+  AppId: []
+tags:
+- name: Transfers
+  description: Asset transfers built, signed, and broadcast from a wallet.
+paths:
+  /wallets/{walletId}/transfers:
+    post:
+      operationId: transferAsset
+      tags:
+      - Transfers
+      summary: Transfer an asset from a wallet
+      description: Initiates a native, ERC-20/SPL/token, or NFT transfer from a wallet. Dfns builds, signs, and broadcasts the transaction. Requires a User Action Signature and may be gated by the policy engine for approval.
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      parameters:
+      - in: path
+        name: walletId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - kind
+              - to
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Native
+                  - Erc20
+                  - Erc721
+                  - Spl
+                  - Sep20
+                  example: Native
+                to:
+                  type: string
+                amount:
+                  type: string
+                contract:
+                  type: string
+      responses:
+        '200':
+          description: The created transfer request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferRequest'
+    get:
+      operationId: listTransfers
+      tags:
+      - Transfers
+      summary: List wallet transfer requests
+      parameters:
+      - in: path
+        name: walletId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: A list of transfer requests for the wallet.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransferRequest'
+                  nextPageToken:
+                    type: string
+                    nullable: true
+  /wallets/{walletId}/transfers/{transferId}:
+    get:
+      operationId: getTransfer
+      tags:
+      - Transfers
+      summary: Get a wallet transfer request by id
+      parameters:
+      - in: path
+        name: walletId
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: transferId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The transfer request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferRequest'
+components:
+  schemas:
+    TransferRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        walletId:
+          type: string
+        network:
+          type: string
+        requester:
+          type: object
+        status:
+          type: string
+          enum:
+          - Pending
+          - Executing
+          - Broadcasted
+          - Confirmed
+          - Failed
+          - Rejected
+        txHash:
+          type: string
+          nullable: true
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).

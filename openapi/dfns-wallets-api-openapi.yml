@@ -1,0 +1,244 @@
+openapi: 3.0.1
+info:
+  title: Dfns Approvals Wallets API
+  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+- url: https://api.dfns.io
+  description: Dfns production REST API (Europe / default)
+- url: https://api.uae.dfns.io
+  description: Dfns production REST API (UAE region)
+security:
+- BearerAuth: []
+  AppId: []
+tags:
+- name: Wallets
+  description: Programmable non-custodial wallets, balances, NFTs, and history.
+paths:
+  /wallets:
+    post:
+      operationId: createWallet
+      tags:
+      - Wallets
+      summary: Create a wallet
+      description: Creates a new non-custodial wallet on a given blockchain network, backed by an MPC key. Requires a User Action Signature.
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - network
+              properties:
+                network:
+                  type: string
+                  example: EthereumSepolia
+                name:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: The created wallet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+    get:
+      operationId: listWallets
+      tags:
+      - Wallets
+      summary: List wallets
+      parameters:
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: paginationToken
+        schema:
+          type: string
+      responses:
+        '200':
+          description: A paginated list of wallets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletList'
+  /wallets/{walletId}:
+    get:
+      operationId: getWallet
+      tags:
+      - Wallets
+      summary: Get a wallet by id
+      parameters:
+      - in: path
+        name: walletId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The wallet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+  /wallets/{walletId}/assets:
+    get:
+      operationId: getWalletAssets
+      tags:
+      - Wallets
+      summary: Get wallet assets (balances)
+      parameters:
+      - in: path
+        name: walletId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The wallet's asset balances.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  walletId:
+                    type: string
+                  network:
+                    type: string
+                  assets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WalletAsset'
+  /wallets/{walletId}/nfts:
+    get:
+      operationId: getWalletNfts
+      tags:
+      - Wallets
+      summary: Get wallet NFTs
+      parameters:
+      - in: path
+        name: walletId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The wallet's NFTs.
+          content:
+            application/json:
+              schema:
+                type: object
+  /wallets/{walletId}/history:
+    get:
+      operationId: getWalletHistory
+      tags:
+      - Wallets
+      summary: Get wallet transfer history
+      parameters:
+      - in: path
+        name: walletId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The wallet's on-chain history.
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    WalletList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Wallet'
+        nextPageToken:
+          type: string
+          nullable: true
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          example: wa-6lo9d-9uvpm-9skk4dv0v99cf6bs
+        network:
+          type: string
+          example: EthereumSepolia
+        address:
+          type: string
+          example: 0x8f3a3a...
+        signingKey:
+          type: object
+          properties:
+            scheme:
+              type: string
+              example: ECDSA
+            curve:
+              type: string
+              example: secp256k1
+            publicKey:
+              type: string
+        status:
+          type: string
+          enum:
+          - Active
+          - Archived
+        custodial:
+          type: boolean
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        dateCreated:
+          type: string
+          format: date-time
+    WalletAsset:
+      type: object
+      properties:
+        symbol:
+          type: string
+        decimals:
+          type: integer
+        balance:
+          type: string
+        kind:
+          type: string
+          example: Native
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).

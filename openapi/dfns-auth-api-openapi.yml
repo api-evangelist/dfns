@@ -1,0 +1,220 @@
+openapi: 3.0.1
+info:
+  title: Dfns Approvals Auth API
+  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+- url: https://api.dfns.io
+  description: Dfns production REST API (Europe / default)
+- url: https://api.uae.dfns.io
+  description: Dfns production REST API (UAE region)
+security:
+- BearerAuth: []
+  AppId: []
+tags:
+- name: Auth
+  description: Login, User Action Signing, users, and credentials.
+paths:
+  /auth/action/init:
+    post:
+      operationId: createUserActionChallenge
+      tags:
+      - Auth
+      summary: Initialize a User Action Signing challenge
+      description: Starts the User Action Signing flow for a sensitive operation, returning a challenge the client must sign with its credential.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - userActionPayload
+              - userActionHttpMethod
+              - userActionHttpPath
+              properties:
+                userActionPayload:
+                  type: string
+                userActionHttpMethod:
+                  type: string
+                userActionHttpPath:
+                  type: string
+      responses:
+        '200':
+          description: The user action challenge.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActionChallenge'
+  /auth/action:
+    post:
+      operationId: completeUserAction
+      tags:
+      - Auth
+      summary: Complete a User Action Signing challenge
+      description: Submits the signed challenge and returns a User Action Signature token to pass in the X-DFNS-USERACTION header of the sensitive request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - challengeIdentifier
+              - firstFactor
+              properties:
+                challengeIdentifier:
+                  type: string
+                firstFactor:
+                  type: object
+      responses:
+        '200':
+          description: The user action signature.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActionResponse'
+  /auth/login:
+    post:
+      operationId: login
+      tags:
+      - Auth
+      summary: Complete a user login
+      description: Exchanges signed login credentials for an access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                challengeIdentifier:
+                  type: string
+                firstFactor:
+                  type: object
+      responses:
+        '200':
+          description: The login result including an access token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /auth/login/delegated:
+    post:
+      operationId: delegatedLogin
+      tags:
+      - Auth
+      summary: Delegated login
+      description: Allows a service account to obtain a scoped access token on behalf of an end user for delegated (end-user-controlled) signing flows. Requires a User Action Signature.
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - username
+              properties:
+                username:
+                  type: string
+      responses:
+        '200':
+          description: The delegated access token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /auth/users:
+    get:
+      operationId: listUsers
+      tags:
+      - Auth
+      summary: List users
+      responses:
+        '200':
+          description: A list of users in the organization.
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      operationId: createUser
+      tags:
+      - Auth
+      summary: Create a user
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - email
+              properties:
+                email:
+                  type: string
+                kind:
+                  type: string
+                  enum:
+                  - CustomerEmployee
+                  - EndUser
+      responses:
+        '200':
+          description: The created user.
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    UserActionChallenge:
+      type: object
+      properties:
+        challenge:
+          type: string
+        challengeIdentifier:
+          type: string
+        allowCredentials:
+          type: object
+    UserActionResponse:
+      type: object
+      properties:
+        userAction:
+          type: string
+          description: The User Action Signature token to pass in X-DFNS-USERACTION.
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).

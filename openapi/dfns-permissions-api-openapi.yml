@@ -1,0 +1,151 @@
+openapi: 3.0.1
+info:
+  title: Dfns Approvals Permissions API
+  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+- url: https://api.dfns.io
+  description: Dfns production REST API (Europe / default)
+- url: https://api.uae.dfns.io
+  description: Dfns production REST API (UAE region)
+security:
+- BearerAuth: []
+  AppId: []
+tags:
+- name: Permissions
+  description: Permissions and their assignments to identities.
+paths:
+  /permissions:
+    post:
+      operationId: createPermission
+      tags:
+      - Permissions
+      summary: Create a permission
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Permission'
+      responses:
+        '200':
+          description: The created permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+    get:
+      operationId: listPermissions
+      tags:
+      - Permissions
+      summary: List permissions
+      responses:
+        '200':
+          description: A list of permissions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
+  /permissions/{permissionId}:
+    get:
+      operationId: getPermission
+      tags:
+      - Permissions
+      summary: Get a permission by id
+      parameters:
+      - in: path
+        name: permissionId
+        required: true
+        schema:
+          type: string
+      responses:
+        '200':
+          description: The permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+  /permissions/{permissionId}/assignments:
+    post:
+      operationId: createPermissionAssignment
+      tags:
+      - Permissions
+      summary: Assign a permission to an identity
+      description: Assigns a permission to a user, service account, or PAT.
+      security:
+      - BearerAuth: []
+        AppId: []
+        UserAction: []
+      parameters:
+      - in: path
+        name: permissionId
+        required: true
+        schema:
+          type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+              - identityId
+              properties:
+                identityId:
+                  type: string
+      responses:
+        '200':
+          description: The created assignment.
+          content:
+            application/json:
+              schema:
+                type: object
+components:
+  schemas:
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        operations:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum:
+          - Active
+          - Archived
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).
