@@ -1,0 +1,36 @@
+{
+  "provider": "dfns",
+  "sources": [
+    "dfns-approvals-api-openapi.yml",
+    "dfns-auth-api-openapi.yml",
+    "dfns-keys-api-openapi.yml",
+    "dfns-networks-api-openapi.yml",
+    "dfns-permissions-api-openapi.yml",
+    "dfns-policies-api-openapi.yml",
+    "dfns-serviceaccounts-api-openapi.yml",
+    "dfns-signatures-api-openapi.yml",
+    "dfns-transactions-api-openapi.yml",
+    "dfns-transfers-api-openapi.yml",
+    "dfns-wallets-api-openapi.yml",
+    "dfns-webhooks-api-openapi.yml"
+  ],
+  "outputs": [
+    "dfns-approvals-api-openapi.yml",
+    "dfns-auth-api-openapi.yml",
+    "dfns-keys-api-openapi.yml",
+    "dfns-networks-api-openapi.yml",
+    "dfns-permissions-api-openapi.yml",
+    "dfns-policies-api-openapi.yml",
+    "dfns-serviceaccounts-api-openapi.yml",
+    "dfns-signatures-api-openapi.yml",
+    "dfns-transactions-api-openapi.yml",
+    "dfns-transfers-api-openapi.yml",
+    "dfns-wallets-api-openapi.yml",
+    "dfns-webhooks-api-openapi.yml"
+  ],
+  "archived": [],
+  "errors": [],
+  "warnings": [],
+  "notes": [],
+  "skipped": []
+}
