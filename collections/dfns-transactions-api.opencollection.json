@@ -1,0 +1,68 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Dfns Approvals Transactions API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Transactions",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List wallet transaction requests",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/wallets/:walletId/transactions",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "List wallet transaction requests"
+        },
+        {
+          "info": {
+            "name": "Broadcast a transaction from a wallet",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/wallets/:walletId/transactions",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Signs and broadcasts a caller-supplied transaction (e.g. a smart contract call) from the wallet. Requires a User Action Signature."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

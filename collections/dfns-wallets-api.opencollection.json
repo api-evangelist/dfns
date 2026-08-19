@@ -1,0 +1,138 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Dfns Approvals Wallets API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Wallets",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List wallets",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/wallets",
+            "params": [
+              {
+                "name": "limit",
+                "value": "",
+                "type": "query"
+              },
+              {
+                "name": "paginationToken",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "List wallets"
+        },
+        {
+          "info": {
+            "name": "Create a wallet",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/wallets",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Creates a new non-custodial wallet on a given blockchain network, backed by an MPC key. Requires a User Action Signature."
+        },
+        {
+          "info": {
+            "name": "Get a wallet by id",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/wallets/:walletId",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get a wallet by id"
+        },
+        {
+          "info": {
+            "name": "Get wallet assets (balances)",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/wallets/:walletId/assets",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get wallet assets (balances)"
+        },
+        {
+          "info": {
+            "name": "Get wallet NFTs",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/wallets/:walletId/nfts",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get wallet NFTs"
+        },
+        {
+          "info": {
+            "name": "Get wallet transfer history",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/wallets/:walletId/history",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get wallet transfer history"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

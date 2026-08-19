@@ -1,0 +1,98 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Dfns Approvals Keys API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Keys",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List keys",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/keys"
+          },
+          "docs": "List keys"
+        },
+        {
+          "info": {
+            "name": "Create a key",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/keys",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Creates a standalone MPC key (scheme/curve) not bound to a single network, usable to derive addresses across chains. Requires a User Action Signature."
+        },
+        {
+          "info": {
+            "name": "Get a key by id",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/keys/:keyId",
+            "params": [
+              {
+                "name": "keyId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get a key by id"
+        },
+        {
+          "info": {
+            "name": "Delegate a key to an end user",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/keys/:keyId/delegate",
+            "params": [
+              {
+                "name": "keyId",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Transfers control of a key (and its wallets) to an end user's credentials, enabling non-custodial delegated signing. Requires a User Action Signature."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

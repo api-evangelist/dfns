@@ -1,0 +1,79 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Dfns Approvals API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Approvals",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List approvals",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/v2/policy-approvals"
+          },
+          "docs": "List approvals"
+        },
+        {
+          "info": {
+            "name": "Get an approval by id",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/v2/policy-approvals/:approvalId",
+            "params": [
+              {
+                "name": "approvalId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get an approval by id"
+        },
+        {
+          "info": {
+            "name": "Create an approval decision (approve or deny)",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/v2/policy-approvals/:approvalId/decisions",
+            "params": [
+              {
+                "name": "approvalId",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Records an Approved or Denied decision on a pending approval. Requires a User Action Signature."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

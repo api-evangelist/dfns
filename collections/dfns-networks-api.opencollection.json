@@ -1,0 +1,64 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Dfns Approvals Networks API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Networks",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "Estimate network fees",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/networks/fees",
+            "params": [
+              {
+                "name": "network",
+                "value": "",
+                "type": "query"
+              }
+            ]
+          },
+          "docs": "Returns a current fee estimate (e.g. EIP-1559 maxFeePerGas / maxPriorityFeePerGas) for a given blockchain network."
+        },
+        {
+          "info": {
+            "name": "Read from a smart contract (call function)",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/networks/:network/call-function",
+            "params": [
+              {
+                "name": "network",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            }
+          },
+          "docs": "Performs a read-only (eth_call style) function call against a contract on a network without creating a transaction."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

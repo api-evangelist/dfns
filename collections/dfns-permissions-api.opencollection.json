@@ -1,0 +1,98 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Dfns Approvals Permissions API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Permissions",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List permissions",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/permissions"
+          },
+          "docs": "List permissions"
+        },
+        {
+          "info": {
+            "name": "Create a permission",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/permissions",
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Create a permission"
+        },
+        {
+          "info": {
+            "name": "Get a permission by id",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/permissions/:permissionId",
+            "params": [
+              {
+                "name": "permissionId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get a permission by id"
+        },
+        {
+          "info": {
+            "name": "Assign a permission to an identity",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/permissions/:permissionId/assignments",
+            "params": [
+              {
+                "name": "permissionId",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Assigns a permission to a user, service account, or PAT."
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}

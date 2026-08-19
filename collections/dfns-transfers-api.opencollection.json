@@ -1,0 +1,91 @@
+{
+  "opencollection": "1.0.0",
+  "info": {
+    "name": "Dfns Approvals Transfers API",
+    "version": "1.0"
+  },
+  "request": {
+    "auth": {
+      "type": "bearer",
+      "token": "{{bearerToken}}"
+    }
+  },
+  "items": [
+    {
+      "info": {
+        "name": "Transfers",
+        "type": "folder"
+      },
+      "items": [
+        {
+          "info": {
+            "name": "List wallet transfer requests",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/wallets/:walletId/transfers",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "List wallet transfer requests"
+        },
+        {
+          "info": {
+            "name": "Transfer an asset from a wallet",
+            "type": "http"
+          },
+          "http": {
+            "method": "POST",
+            "url": "https://api.dfns.io/wallets/:walletId/transfers",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              }
+            ],
+            "body": {
+              "type": "json",
+              "data": "{}"
+            },
+            "auth": {
+              "type": "bearer",
+              "token": "{{bearerToken}}"
+            }
+          },
+          "docs": "Initiates a native, ERC-20/SPL/token, or NFT transfer from a wallet. Dfns builds, signs, and broadcasts the transaction. Requires a User Action Signature and may be gated by the policy engine for approval."
+        },
+        {
+          "info": {
+            "name": "Get a wallet transfer request by id",
+            "type": "http"
+          },
+          "http": {
+            "method": "GET",
+            "url": "https://api.dfns.io/wallets/:walletId/transfers/:transferId",
+            "params": [
+              {
+                "name": "walletId",
+                "value": "",
+                "type": "path"
+              },
+              {
+                "name": "transferId",
+                "value": "",
+                "type": "path"
+              }
+            ]
+          },
+          "docs": "Get a wallet transfer request by id"
+        }
+      ]
+    }
+  ],
+  "bundled": true
+}
