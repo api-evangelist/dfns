@@ -76,6 +76,8 @@ apis:
   humanURL: https://docs.dfns.co/d/api-docs/wallets
   baseURL: https://api.dfns.io
   tags:
+  - Authentication
+  tags_raw:
   - Auth
   properties:
   - type: OpenAPI
@@ -266,6 +268,8 @@ apis:
   humanURL: https://docs.dfns.co/d/api-docs/wallets
   baseURL: https://api.dfns.io
   tags:
+  - Service Accounts
+  tags_raw:
   - ServiceAccounts
   properties:
   - type: OpenAPI
@@ -342,6 +346,8 @@ apis:
   humanURL: https://docs.dfns.co/d/api-docs/wallets
   baseURL: https://api.dfns.io
   tags:
+  - Transaction
+  tags_raw:
   - Transactions
   properties:
   - type: OpenAPI
@@ -456,6 +462,8 @@ apis:
   humanURL: https://docs.dfns.co/d/api-docs/wallets
   baseURL: https://api.dfns.io
   tags:
+  - Webhook
+  tags_raw:
   - Webhooks
   properties:
   - type: OpenAPI
