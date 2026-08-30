@@ -280,7 +280,7 @@ apis:
   humanURL: https://docs.dfns.co/d/api-docs/wallets
   baseURL: https://api.dfns.io
   tags:
-  - Service Accounts
+  - ServiceAccounts
   tags_raw:
   - ServiceAccounts
   properties:
