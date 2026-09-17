@@ -274,46 +274,6 @@ apis:
     url: https://docs.dfns.co/d/api-docs/authentication/service-account-management
   - type: Documentation
     url: https://docs.dfns.co/d/api-docs/networks
-- aid: dfns:dfns-serviceaccounts-api
-  name: Dfns ServiceAccounts API
-  description: Machine identities and their access tokens.
-  humanURL: https://docs.dfns.co/d/api-docs/wallets
-  baseURL: https://api.dfns.io
-  tags:
-  - Service Accounts
-  tags_raw:
-  - ServiceAccounts
-  properties:
-  - type: OpenAPI
-    url: openapi/dfns-serviceaccounts-api-openapi.yml
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/wallets
-  - type: APIReference
-    url: https://docs.dfns.co/d/api-docs/wallets/api-reference
-  - type: PostmanCollection
-    url: collections/dfns.postman_collection.json
-  - type: OpenCollection
-    url: collections/dfns.opencollection.json
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/keys
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/wallets/transfer-asset-from-wallet
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/wallets/broadcast-transaction-from-wallet
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/wallets/generate-signature-from-wallet
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/policy-engine
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/webhooks
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/authentication
-  - type: APIReference
-    url: https://docs.dfns.co/d/api-docs/authentication/user-action-signing
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/authentication/service-account-management
-  - type: Documentation
-    url: https://docs.dfns.co/d/api-docs/networks
 - aid: dfns:dfns-signatures-api
   name: Dfns Signatures API
   description: Raw signature generation from keys.
@@ -480,6 +440,44 @@ apis:
   properties:
   - type: OpenAPI
     url: openapi/dfns-webhooks-api-openapi.yml
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/wallets
+  - type: APIReference
+    url: https://docs.dfns.co/d/api-docs/wallets/api-reference
+  - type: PostmanCollection
+    url: collections/dfns.postman_collection.json
+  - type: OpenCollection
+    url: collections/dfns.opencollection.json
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/keys
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/wallets/transfer-asset-from-wallet
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/wallets/broadcast-transaction-from-wallet
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/wallets/generate-signature-from-wallet
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/policy-engine
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/webhooks
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/authentication
+  - type: APIReference
+    url: https://docs.dfns.co/d/api-docs/authentication/user-action-signing
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/authentication/service-account-management
+  - type: Documentation
+    url: https://docs.dfns.co/d/api-docs/networks
+- aid: dfns:dfns-service-accounts-api
+  name: Dfns Service Accounts API
+  description: Machine identities and their access tokens.
+  humanURL: https://docs.dfns.co/d/api-docs/wallets
+  baseURL: https://api.dfns.io
+  tags:
+  - Service Accounts
+  properties:
+  - type: OpenAPI
+    url: openapi/dfns-service-accounts-api-openapi.yml
   - type: Documentation
     url: https://docs.dfns.co/d/api-docs/wallets
   - type: APIReference
