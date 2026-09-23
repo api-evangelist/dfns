@@ -1,9 +1,7 @@
-openapi: 3.0.1
+openapi: 3.2.0
 info:
-  title: Dfns Approvals Permissions API
-  description: 'Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API. Covers programmable non-custodial wallets, MPC keys, transfers and transactions, signature generation, the policy engine and approvals, webhooks, permissions and authentication (including User Action Signing), service accounts, and blockchain network reads.
-
-    Authentication uses an Authorization Bearer access token (from a service account token or a user login) plus, for sensitive mutating operations, a User Action Signature obtained via the User Action Signing challenge/complete flow and passed in the X-DFNS-USERACTION header.'
+  title: Dfns Permissions API
+  description: Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API.
   contact:
     name: Dfns Support
     url: https://www.dfns.co/
