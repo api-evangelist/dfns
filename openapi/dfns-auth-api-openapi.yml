@@ -185,6 +185,12 @@ paths:
                 type: object
 components:
   schemas:
+    UserActionResponse:
+      type: object
+      properties:
+        userAction:
+          type: string
+          description: The User Action Signature token to pass in X-DFNS-USERACTION.
     UserActionChallenge:
       type: object
       properties:
@@ -194,12 +200,6 @@ components:
           type: string
         allowCredentials:
           type: object
-    UserActionResponse:
-      type: object
-      properties:
-        userAction:
-          type: string
-          description: The User Action Signature token to pass in X-DFNS-USERACTION.
   securitySchemes:
     BearerAuth:
       type: http
