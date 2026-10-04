@@ -174,18 +174,6 @@ components:
           type:
           - string
           - 'null'
-    WalletAsset:
-      type: object
-      properties:
-        symbol:
-          type: string
-        decimals:
-          type: integer
-        balance:
-          type: string
-        kind:
-          type: string
-          example: Native
     Wallet:
       type: object
       properties:
@@ -225,6 +213,18 @@ components:
         dateCreated:
           type: string
           format: date-time
+    WalletAsset:
+      type: object
+      properties:
+        symbol:
+          type: string
+        decimals:
+          type: integer
+        balance:
+          type: string
+        kind:
+          type: string
+          example: Native
   securitySchemes:
     BearerAuth:
       type: http
