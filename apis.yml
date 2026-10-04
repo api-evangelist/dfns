@@ -510,6 +510,9 @@ apis:
   - type: Documentation
     url: https://docs.dfns.co/d/api-docs/networks
 common:
+- type: CapabilityMap
+  url: capabilities/dfns-capability-edges.yml
+  name: Dfns Business Capability Map
 - type: AgenticAccess
   url: agentic-access/dfns-agentic-access.yml
 - type: DomainSecurity

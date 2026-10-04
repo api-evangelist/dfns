@@ -1,0 +1,56 @@
+slug: dfns
+provider: Dfns
+generated_by: planning/capability-mapping/scripts/classify_capabilities.py
+model: claude-opus-5
+frame:
+- Software & Technology
+min_confidence: 0.7
+capability_model:
+  source: https://github.com/vincentmakes/turbo-ea-capabilities
+  license: CC-BY-4.0
+  attribution: Turbo EA Capabilities by Vincent Verdet — Turbo EA, https://github.com/vincentmakes/turbo-ea-capabilities,
+    CC BY 4.0
+  notice: NOTICE
+edge_count: 4
+edges:
+- tag: Auth
+  spec_file: dfns-auth-api-openapi.yml
+  capability_id: BC-620.20
+  capability_id_l1: BC-620
+  capability_name: Identity & Access Management
+  confidence: 0.85
+  evidence: POST /auth/login  login  Complete a user login; GET /auth/users  listUsers  List users; POST
+    /auth/action/init  createUserActionChallenge
+  reason: Login, delegated login, user lifecycle and User Action Signing challenges are authentication
+    and user identity administration — Identity & Access Management.
+- tag: Permissions
+  spec_file: dfns-permissions-api-openapi.yml
+  capability_id: BC-620.20
+  capability_id_l1: BC-620
+  capability_name: Identity & Access Management
+  confidence: 0.85
+  evidence: POST /permissions/{permissionId}/assignments  createPermissionAssignment  Assign a permission
+    to an identity
+  reason: Creation of permissions and their assignment to identities is authorisation administration,
+    squarely Identity & Access Management.
+- tag: Webhooks
+  spec_file: dfns-webhooks-api-openapi.yml
+  capability_id: BC-4270.80
+  capability_id_l1: BC-4270
+  capability_name: Webhook & Event Subscription Management
+  confidence: 0.85
+  evidence: POST /webhooks  createWebhook  Create a webhook; GET /webhooks/{webhookId}/events  listWebhookEvents  List
+    webhook events; POST /webhooks/{webhookId}/ping
+  reason: Full lifecycle of outbound webhook subscriptions plus delivery testing (ping) and event delivery
+    listing — exactly the surface described by Webhook & Event Subscription Management within the developer
+    platform/API ecosystem capability.
+- tag: Keys
+  spec_file: dfns-keys-api-openapi.yml
+  capability_id: BC-620
+  capability_id_l1: BC-620
+  capability_name: Cybersecurity Management
+  confidence: 0.7
+  evidence: POST /keys  createKey  Create a key; POST /keys/{keyId}/delegate  delegateKey  Delegate a
+    key to an end user
+  reason: Cryptographic MPC key creation and delegation is a security control capability. Sits under Cybersecurity
+    Management, but key management maps cleanly to neither IAM nor Security Architecture, so L1 only.
