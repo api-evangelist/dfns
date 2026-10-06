@@ -44,7 +44,7 @@ tags:
 - Web3
 - Non-Custodial
 created: '2026-07-01'
-modified: '2026-07-01'
+modified: '2026-10-06'
 specificationVersion: '0.23'
 apis:
 - aid: dfns:dfns-approvals-api
@@ -510,6 +510,10 @@ apis:
   - type: Documentation
     url: https://docs.dfns.co/d/api-docs/networks
 common:
+- url: https://dfns.co/blog
+  type: Blog
+- url: https://dfns.co/rss.xml
+  type: BlogRSS
 - type: CapabilityMap
   url: capabilities/dfns-capability-edges.yml
   name: Dfns Business Capability Map
