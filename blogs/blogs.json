@@ -1,0 +1,21 @@
+{
+  "repo": "dfns",
+  "feeds": [
+    {
+      "source": "https://dfns.co/blog",
+      "feed_url": "https://dfns.co/blog",
+      "title": "",
+      "saved": 0,
+      "method": "none"
+    },
+    {
+      "source": "https://dfns.co/rss.xml",
+      "feed_url": "https://dfns.co/rss.xml",
+      "title": "",
+      "saved": 4,
+      "method": "feed"
+    }
+  ],
+  "post_count": 4,
+  "fetched": "2026-10-10T13:15:00Z"
+}
