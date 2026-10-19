@@ -1,0 +1,2133 @@
+openapi: 3.2.0
+info:
+  version: 2.0.249
+  title: Dfns Tenant API
+servers:
+- url: https://api.dfns.io
+  description: Default - Europe
+- url: https://api.uae.dfns.io
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
+tags:
+- name: Tenant
+paths:
+  /tenant/permissions/{permissionId}/assign:
+    post:
+      operationId: assignTenantPermission
+      summary: Assign Tenant Permission
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: 'Creates a permission that allows certain specified operations to be executed.
+
+
+        Response is either the permission object itself (success) or a reason why it was not possible to create the permission (failure).'
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Permissions:Assign`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                identityId:
+                  type: string
+                  minLength: 1
+                  description: ID of the identity to assign the permission to. Can be a user ID, a service account ID, or a personal access token (PAT) ID.
+              required:
+              - identityId
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+  /tenant/permissions/{permissionId}/revoke:
+    post:
+      operationId: revokeTenantPermission
+      summary: Revoke Tenant Permission
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Revokes a permission assignment (success) or gives reason why it's not possible (failure).
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Permissions:Revoke`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                identityId:
+                  type: string
+                  minLength: 1
+                  description: ID of the identity to revoke the permission from. Can be a user ID, a service account ID, or a personal access token (PAT) ID.
+              required:
+              - identityId
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+  /tenant/permissions/{permissionId}:
+    get:
+      operationId: getTenantPermission
+      summary: Get Tenant Permission
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: Retrieves a specific permission (success) or gives a reason why it's not possible (failure).
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Permissions:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+  /tenant/permissions:
+    get:
+      operationId: listTenantPermissions
+      summary: List Tenant Permissions
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: Retrieves a list of permissions (success) or gives a reason why it's not possible (failure).
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Permissions:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /tenant/users:
+    post:
+      operationId: createTenantUser
+      summary: Create Tenant User
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Creates a new Tenant User. This creates the user and sends him an email with a registration code. The user is created without any permissions.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Users:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  description: The email address of the new user.
+                externalId:
+                  type: string
+                  description: Value that can be used to correlate the entity with an external system.
+                isSSORequired:
+                  type: boolean
+                  default: false
+                  description: If set to true, the user will have to authenticate via SSO
+              required:
+              - email
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantUser'
+    get:
+      operationId: listTenantUsers
+      summary: List Tenant Users
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: List all Users in your Tenant.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Users:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TenantUser'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /tenant/users/{userId}:
+    put:
+      operationId: updateTenantUser
+      summary: Update Tenant User
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Updates a new Tenant User details.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Users:Update`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: User id.
+        required: true
+        description: User id.
+        name: userId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                isSSORequired:
+                  type: boolean
+              required:
+              - isSSORequired
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+    delete:
+      operationId: deleteTenantUser
+      summary: Delete Tenant User
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Delete a specific Tenant User.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Users:Delete`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: User id.
+        required: true
+        description: User id.
+        name: userId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+    get:
+      operationId: getTenantUser
+      summary: Get Tenant User
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: Get a Tenant User.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Users:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: User id.
+        required: true
+        description: User id.
+        name: userId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TenantUser'
+  /tenant/orgs:
+    get:
+      operationId: listOrgs
+      summary: List Orgs
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: 'List all Orgs in your Tenant.
+
+        By default, returns non-archived Orgs, unless specific status are passed'
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Orgs:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      - schema:
+          anyOf:
+          - type: string
+            enum:
+            - Active
+            - Suspended
+            - Archived
+          - type: array
+            items:
+              type: string
+              enum:
+              - Active
+              - Suspended
+              - Archived
+        required: false
+        name: status
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        name:
+                          type: string
+                        status:
+                          type: string
+                          enum:
+                          - Active
+                          - Suspended
+                          - Archived
+                        dateCreated:
+                          type: string
+                      required:
+                      - id
+                      - name
+                      - status
+                      - dateCreated
+                      additionalProperties: false
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+    post:
+      operationId: createOrg
+      summary: Create Org
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Create a new Org in your Tenant. The creator of the org will be granted access to the Org as the first Org Admin.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Orgs:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                keyStores:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        minLength: 1
+                      primary:
+                        type: boolean
+                    required:
+                    - id
+              required:
+              - name
+              - keyStores
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  org:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                    required:
+                    - id
+                    - name
+                required:
+                - org
+  /tenant/user-groups:
+    post:
+      operationId: createTenantUserGroup
+      summary: Create Tenant User Group
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Create a user group in the caller's tenant. A group holds tenant permissions through the tenant permission assignment endpoint, and its members hold those permissions in addition to their own.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:UserGroups:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                  pattern: ^[A-Za-z0-9_+.-]+$
+                  description: Name of the group. Unique within the org or tenant, ignoring case. A deleted group frees its name for reuse.
+                description:
+                  type: string
+                  minLength: 1
+                  maxLength: 1024
+                  description: Description of the group.
+              required:
+              - name
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+    get:
+      operationId: listTenantUserGroups
+      summary: List Tenant User Groups
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: List the user groups in the caller's tenant.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:UserGroups:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserGroup'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /tenant/user-groups/{userGroupId}:
+    get:
+      operationId: getTenantUserGroup
+      summary: Get Tenant User Group
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: Get a specific user group of the caller's tenant.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:UserGroups:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^ug-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User group id.
+        required: true
+        description: User group id.
+        name: userGroupId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+    put:
+      operationId: updateTenantUserGroup
+      summary: Update Tenant User Group
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Rename a user group of the caller's tenant or change its description. Fields left out keep their value. Its permissions and members are unaffected.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:UserGroups:Update`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^ug-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User group id.
+        required: true
+        description: User group id.
+        name: userGroupId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 128
+                  pattern: ^[A-Za-z0-9_+.-]+$
+                  description: Name of the group. Unique within the org or tenant, ignoring case. A deleted group frees its name for reuse.
+                description:
+                  type:
+                  - string
+                  - 'null'
+                  minLength: 1
+                  maxLength: 1024
+                  description: Description of the group. Null removes it.
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserGroup'
+    delete:
+      operationId: deleteTenantUserGroup
+      summary: Delete Tenant User Group
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Delete a user group of the caller's tenant. Its tenant permission assignments are revoked and its members are removed. The name can be reused.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:UserGroups:Delete`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^ug-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User group id.
+        required: true
+        description: User group id.
+        name: userGroupId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+  /tenant/user-groups/{userGroupId}/members:
+    get:
+      operationId: listTenantUserGroupMembers
+      summary: List Tenant User Group Members
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: List the members of a user group of the caller's tenant.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:UserGroups:Members:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^ug-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User group id.
+        required: true
+        description: User group id.
+        name: userGroupId
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserGroupMember'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+    post:
+      operationId: addTenantUserGroupMembers
+      summary: Add Tenant User Group Members
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Add tenant users to a user group. Each member gains every tenant permission assigned to the group, in addition to their own.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:UserGroups:Members:Add`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^ug-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User group id.
+        required: true
+        description: User group id.
+        name: userGroupId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^us-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: User id.
+                    example: us-6b58p-r53sr-rlrd3l5cj3uc4ome
+                  minItems: 1
+                  maxItems: 100
+                  description: Tenant users to add. Users already in the group are left unchanged.
+              required:
+              - userIds
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+    delete:
+      operationId: removeTenantUserGroupMembers
+      summary: Remove Tenant User Group Members
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Remove tenant users from a user group. Each removed user immediately loses every tenant permission they held only through this group.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:UserGroups:Members:Remove`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^ug-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User group id.
+        required: true
+        description: User group id.
+        name: userGroupId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                userIds:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^us-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: User id.
+                    example: us-6b58p-r53sr-rlrd3l5cj3uc4ome
+                  minItems: 1
+                  maxItems: 100
+                  description: Tenant users to remove. Users not in the group are left unchanged.
+              required:
+              - userIds
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+  /tenant/orgs/{orgId}:
+    get:
+      operationId: getOrg
+      summary: Get Org
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+      description: Get details on a single Org within your Tenant.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Orgs:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Organization id.
+        required: true
+        description: Organization id.
+        name: orgId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  org:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      status:
+                        type: string
+                        enum:
+                        - Active
+                        - Suspended
+                        - Archived
+                      dateCreated:
+                        type: string
+                    required:
+                    - id
+                    - name
+                    - status
+                    - dateCreated
+                    additionalProperties: false
+                required:
+                - org
+    put:
+      operationId: updateOrg
+      summary: Update Org
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Update the name of an Org within your Tenant.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Orgs:Update`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Organization id.
+        required: true
+        description: Organization id.
+        name: orgId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  org:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      name:
+                        type: string
+                      status:
+                        type: string
+                        enum:
+                        - Active
+                        - Suspended
+                        - Archived
+                      dateCreated:
+                        type: string
+                    required:
+                    - id
+                    - name
+                    - status
+                    - dateCreated
+                    additionalProperties: false
+                required:
+                - org
+  /tenant/orgs/{orgId}/status:
+    put:
+      operationId: updateOrgStatus
+      summary: Update Org Status
+      tags:
+      - Tenant
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Change the status of an Org within your Tenant.
+      x-mint:
+        content: "#### Authentication\n\n❌ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n❌ Service Account\n\n#### Required Permissions\n\n`Tenant:Orgs:Status:Update`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Organization id.
+        required: true
+        description: Organization id.
+        name: orgId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  enum:
+                  - Active
+                  - Suspended
+                  - Archived
+              required:
+              - status
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+components:
+  schemas:
+    UserGroup:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^ug-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User group id.
+          example: ug-139tf-f58l8-lsbt6dp47lfsdvgh
+        orgId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^or-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Organization id.
+          example: or-30tnh-itmjs-s235s5ontr3r23h2
+        tenantId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^acct-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Tenant id.
+          example: acct-24hka-dhili-9hgvdlvr1ohpibp4
+        name:
+          type: string
+          description: Name of the group.
+        description:
+          type: string
+          description: Description of the group.
+        memberCount:
+          type: integer
+          minimum: 0
+          description: Number of members.
+        dateCreated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the group was created.'
+          example: 2023-04-14 20:41:28.715000+00:00
+        dateUpdated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the group was last updated.'
+          example: 2023-04-14 20:41:28.715000+00:00
+      required:
+      - id
+      - name
+      - memberCount
+      - dateCreated
+      - dateUpdated
+    UserGroupMember:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^us-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User id.
+          example: us-6b58p-r53sr-rlrd3l5cj3uc4ome
+        username:
+          type: string
+          description: Username/identifier of the member.
+        kind:
+          type: string
+          enum:
+          - TenantUser
+          - CustomerEmployee
+          - EndUser
+          description: User kind.
+        isActive:
+          type: boolean
+          description: Whether the member is an active user.
+        isArchived:
+          type: boolean
+          description: Whether the member has been archived. Archived members hold no permissions.
+        isServiceAccount:
+          type: boolean
+          description: Whether the member is a service account.
+        dateAdded:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the user was added to the group.'
+          example: 2023-04-14 20:41:28.715000+00:00
+      required:
+      - userId
+      - username
+      - kind
+      - isActive
+      - isArchived
+      - isServiceAccount
+      - dateAdded
+    TenantUser:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^us-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User id.
+          example: us-6b58p-r53sr-rlrd3l5cj3uc4ome
+        kind:
+          type: string
+          enum:
+          - TenantUser
+        username:
+          type: string
+        isRegistered:
+          type: boolean
+        isActive:
+          type: boolean
+        isSSORequired:
+          type: boolean
+        externalId:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: object
+            properties:
+              id:
+                type: string
+              name:
+                type: string
+              operations:
+                type: array
+                items:
+                  type: string
+            required:
+            - id
+            - name
+            - operations
+        orgs:
+          type: array
+          items:
+            type: object
+            properties:
+              orgId:
+                type: string
+              name:
+                type: string
+            required:
+            - orgId
+            - name
+          description: orgs this user has access to
+      required:
+      - id
+      - kind
+      - username
+      - isRegistered
+      - isActive
+      - isSSORequired
+      - permissions
+      - orgs
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^pm-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: ID of the permission (also referred to as "role" in the dashboard).
+          example: pm-37vj4-jkr4l-lc9945spfftkne57
+        name:
+          type: string
+          description: Human-readable name of the permission (role).
+        operations:
+          type: array
+          items:
+            type: string
+          description: List of API operations this permission grants access to. See [Permissions List](https://docs.dfns.co/core-concepts/roles-and-permissions#list-of-permissions) for available operations.
+        status:
+          type: string
+          enum:
+          - Active
+          description: Current status of the permission.
+        isImmutable:
+          type: boolean
+          description: Whether this permission is system-managed and cannot be modified.
+        isArchived:
+          type: boolean
+          description: Whether this permission has been archived (soft-deleted).
+        dateCreated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the permission was created.'
+          example: 2023-04-14 20:41:28.715000+00:00
+        dateUpdated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the permission was last updated.'
+          example: 2023-04-14 20:41:28.715000+00:00
+      required:
+      - id
+      - name
+      - operations
+      - status
+      - isImmutable
+      - isArchived
+      - dateCreated
+      - dateUpdated
+      additionalProperties: false
+  securitySchemes:
+    authenticationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

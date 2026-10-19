@@ -1,55 +1,563 @@
 openapi: 3.2.0
 info:
+  version: 2.0.249
   title: Dfns Permissions API
-  description: Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API.
-  contact:
-    name: Dfns Support
-    url: https://www.dfns.co/
-  termsOfService: https://www.dfns.co/terms-of-service
-  version: '1.0'
 servers:
 - url: https://api.dfns.io
-  description: Dfns production REST API (Europe / default)
+  description: Default - Europe
 - url: https://api.uae.dfns.io
-  description: Dfns production REST API (UAE region)
-security:
-- BearerAuth: []
-  AppId: []
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
 tags:
 - name: Permissions
-  description: Permissions and their assignments to identities.
 paths:
-  /permissions:
-    post:
-      operationId: createPermission
+  /permissions/{permissionId}/archive:
+    put:
+      operationId: archivePermission
+      summary: Archive Permission
       tags:
       - Permissions
-      summary: Create a permission
       security:
-      - BearerAuth: []
-        AppId: []
-        UserAction: []
+      - authenticationToken: []
+        userActionSignature: []
+      description: '@deprecated in favor of "deletePermission".
+
+        Deletes a permission (aka "Role").'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Delete`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Permission'
+              type: object
+              properties:
+                isArchived:
+                  type: boolean
+                  description: '@deprecated - use "deletePermission" method instead'
+              required:
+              - isArchived
+              additionalProperties: false
       responses:
         '200':
-          description: The created permission.
+          description: Success
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Permission'
-    get:
-      operationId: listPermissions
+  /permissions/{permissionId}:
+    delete:
+      operationId: deletePermission
+      summary: Delete Permission
       tags:
       - Permissions
-      summary: List permissions
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Deletes a permission (aka "Role").
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Delete`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
       responses:
         '200':
-          description: A list of permissions.
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+    get:
+      operationId: getPermission
+      summary: Get Permission
+      tags:
+      - Permissions
+      security:
+      - authenticationToken: []
+      description: Retrieves a permission (role) by ID, including any pending change request.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Permission'
+                - type: object
+                  properties:
+                    pendingChangeRequest:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          minLength: 1
+                          maxLength: 64
+                          pattern: ^cr-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                          description: ID of the change request.
+                          example: cr-6uunn-bm6ja-f6rmod5kqrk5rbel
+                        requester:
+                          $ref: '#/components/schemas/ChangeRequestRequester'
+                        status:
+                          type: string
+                          enum:
+                          - Applied
+                          - Failed
+                          - Pending
+                          - Rejected
+                          description: Current status of the change request.
+                        entityId:
+                          type: string
+                          description: ID of the entity being changed.
+                        userActionId:
+                          type: string
+                          description: User action of the change request.
+                        dateCreated:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the change request was created.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        dateResolved:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the change request was resolved.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        approvalId:
+                          type: string
+                          minLength: 1
+                          maxLength: 64
+                          pattern: ^ap-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                          example: ap-2a9in-tt2a1-983lho480p35ejd0
+                        kind:
+                          type: string
+                          enum:
+                          - Permission
+                        operationKind:
+                          type: string
+                          enum:
+                          - Update
+                        body:
+                          type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 1
+                              maxLength: 64
+                              pattern: ^pm-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                              description: ID of the permission (also referred to as "role" in the dashboard).
+                              example: pm-37vj4-jkr4l-lc9945spfftkne57
+                            name:
+                              type: string
+                              description: Human-readable name of the permission (role).
+                            status:
+                              type: string
+                              enum:
+                              - Active
+                              description: Current status of the permission.
+                            operations:
+                              type: array
+                              items:
+                                type: string
+                              description: List of API operations this permission grants access to. See [Permissions List](https://docs.dfns.co/core-concepts/roles-and-permissions#list-of-permissions) for available operations.
+                            isImmutable:
+                              type: boolean
+                              description: Whether this permission is system-managed and cannot be modified.
+                            isArchived:
+                              type: boolean
+                              description: Whether this permission has been archived (soft-deleted).
+                          required:
+                          - id
+                          - name
+                          - status
+                          - operations
+                          - isImmutable
+                          - isArchived
+                          additionalProperties: false
+                      required:
+                      - id
+                      - requester
+                      - status
+                      - entityId
+                      - dateCreated
+                      - kind
+                      - operationKind
+                      - body
+                      additionalProperties: false
+    put:
+      operationId: updatePermission
+      summary: Update Permission
+      tags:
+      - Permissions
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Updates the name or operations of an existing permission (role).
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Update`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: New name for the permission (role).
+                operations:
+                  type: array
+                  items:
+                    anyOf:
+                    - type: string
+                      enum:
+                      - Auth:Logs:Read
+                      - Auth:Users:Create
+                      - Auth:Users:Read
+                      - Auth:Users:Update
+                      - Auth:Users:Activate
+                      - Auth:Users:Deactivate
+                      - Auth:Users:Delete
+                      - Auth:UserGroups:Create
+                      - Auth:UserGroups:Read
+                      - Auth:UserGroups:Update
+                      - Auth:UserGroups:Delete
+                      - Auth:UserGroups:Members:Read
+                      - Auth:UserGroups:Members:Add
+                      - Auth:UserGroups:Members:Remove
+                      - Auth:ServiceAccounts:Create
+                      - Auth:ServiceAccounts:Read
+                      - Auth:ServiceAccounts:Update
+                      - Auth:ServiceAccounts:Activate
+                      - Auth:ServiceAccounts:Deactivate
+                      - Auth:ServiceAccounts:Delete
+                      - Auth:Pats:Create
+                      - Auth:Delegated:Register
+                      - Auth:Delegated:Login
+                      - Auth:Delegated:Recover
+                      - Agreements:Read
+                      - Agreements:Accept
+                      - Exchanges:Create
+                      - Exchanges:Read
+                      - Exchanges:Delete
+                      - Exchanges:Deposits:Create
+                      - Exchanges:Withdrawals:Create
+                      - FeeSponsors:Create
+                      - FeeSponsors:Read
+                      - FeeSponsors:Update
+                      - FeeSponsors:Delete
+                      - FeeSponsors:Use
+                      - Orgs:Read
+                      - Orgs:Update
+                      - Orgs:Settings:Read
+                      - Orgs:Settings:Update
+                      - Permissions:Create
+                      - Permissions:Read
+                      - Permissions:Update
+                      - Permissions:Assign
+                      - Permissions:Revoke
+                      - Permissions:Delete
+                      - Permissions:Assignments:Read
+                      - Policies:Create
+                      - Policies:Read
+                      - Policies:Update
+                      - Policies:Delete
+                      - Policies:Evaluations:Read
+                      - Policies:Evaluations:Vote
+                      - Registry:Addresses:Create
+                      - Registry:Addresses:Read
+                      - Registry:Addresses:Update
+                      - Registry:Addresses:Delete
+                      - Registry:ContractSchemas:Create
+                      - Registry:ContractSchemas:Read
+                      - Registry:ContractSchemas:Delete
+                      - Registry:VerifiedAssets:Create
+                      - Registry:VerifiedAssets:Read
+                      - Registry:VerifiedAssets:Delete
+                      - Stakes:Create
+                      - Stakes:Read
+                      - Stakes:Update
+                      - Swaps:Create
+                      - Swaps:Read
+                      - Payouts:Create
+                      - Payouts:Read
+                      - Payouts:Update
+                      - Payins:Create
+                      - Payins:Read
+                      - Allocations:Create
+                      - Allocations:Update
+                      - Allocations:Read
+                      - Keys:Create
+                      - Keys:Read
+                      - Keys:Update
+                      - Keys:Reuse
+                      - Keys:Delegate
+                      - Keys:Import
+                      - Keys:Export
+                      - Keys:Delete
+                      - Keys:Vrf:Derive
+                      - Keys:ChildKeys:Create
+                      - Keys:Signatures:Create
+                      - Keys:Signatures:Read
+                      - KeyStores:Read
+                      - KeyStores:Instructions:Cancel
+                      - KeyStores:Instructions:Fleets:Create
+                      - KeyStores:Instructions:Fleets:Clone
+                      - KeyStores:Instructions:Fleets:Users:Add
+                      - KeyStores:Instructions:Fleets:Keys:Harvest
+                      - KeyStores:Instructions:Fleets:Provisioners:Add
+                      - KeyStores:Instructions:Keys:ProveControl
+                      - KeyStores:Instructions:Keys:Sign
+                      - Networks:Canton:Validators:Create
+                      - Networks:Canton:Validators:Read
+                      - Networks:Canton:Validators:Update
+                      - Networks:Canton:Validators:Delete
+                      - Networks:Transactions:Reindex
+                      - Wallets:Create
+                      - Wallets:Read
+                      - Wallets:Update
+                      - Wallets:Tags:Add
+                      - Wallets:Tags:Remove
+                      - Wallets:Transactions:Create
+                      - Wallets:Transactions:Read
+                      - Wallets:Transactions:Abort
+                      - Wallets:Transfers:Create
+                      - Wallets:Transfers:Read
+                      - Wallets:Transfers:Abort
+                      - Wallets:Offers:Read
+                      - Wallets:Offers:Settle
+                      - AddressWatches:Create
+                      - AddressWatches:Read
+                      - AddressWatches:Delete
+                      - Vaults:Create
+                      - Vaults:Read
+                      - Vaults:Update
+                      - Vaults:Tags:Add
+                      - Vaults:Tags:Remove
+                      - Vaults:Quarantines:Release
+                      - Vaults:Locks:Create
+                      - Vaults:Locks:Release
+                      - Vaults:Locks:Transfer
+                      - Vaults:Transfers:Create
+                      - Webhooks:Create
+                      - Webhooks:Read
+                      - Webhooks:Update
+                      - Webhooks:Delete
+                      - Webhooks:Ping
+                      - Webhooks:Events:Read
+                      - Billing:Read
+                      - Billing:Manage
+                      - Activities:Read
+                      - Analytics:Read
+                    - type: string
+                      enum:
+                      - Auth:Register:Delegated
+                      - Auth:Login:Delegated
+                      - Auth:Recover:Delegated
+                      - Agreements:Acceptance:Create
+                      - Agreements:Acceptance:Read
+                      - Events:Read
+                      - Permissions:Archive
+                      - Policies:Archive
+                      - Policies:Approvals:Read
+                      - Policies:Approvals:Approve
+                      - Signers:ListSigners
+                      - Payouts:Write
+                      - Keys:Derive
+                      - Networks:CantonValidators:Create
+                      - Networks:CantonValidators:Read
+                      - Networks:CantonValidators:Update
+                      - Networks:CantonValidators:Delete
+                      - Wallets:Tags:Delete
+                      - Vaults:Tags:Delete
+                      - Vaults:Addresses:Create
+                      - Vaults:Locks:Delete
+                      - Billing:Write
+                      - KeyStores:Fleets:Cancel
+                      - KeyStores:Fleets:Create
+                      - KeyStores:Fleets:Clone
+                      - KeyStores:Fleets:AddMacUser
+                      - KeyStores:Fleets:AddProvisioner
+                      - KeyStores:Fleets:KeyHarvest
+                      - KeyStores:ProofOfControl:Create
+                      - KeyStores:OnchainSignatures:Create
+                      - Tenant:Billing:Write
+                      - Tenant:Settings:Write
+                  minItems: 1
+                  description: New list of API operations this permission grants access to. See [Permissions List](https://docs.dfns.co/core-concepts/roles-and-permissions#list-of-permissions) for available operations.
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+  /permissions/{permissionId}/assignments:
+    post:
+      operationId: assignPermission
+      summary: Assign Permission
+      tags:
+      - Permissions
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Assigns a permission (role) to an identity (user, PAT, service account or user group), granting it access to the operations defined in the permission. Returns the assignment on success (200), or a pending change request if approval is required (202).
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Assign`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                identityId:
+                  type: string
+                  minLength: 1
+                  description: ID of the identity to assign the permission to. Can be a user ID, a service account ID, a personal access token (PAT) ID, or a user group ID.
+              required:
+              - identityId
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^as-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: ID of the permission assignment.
+                    example: as-1vcmc-qrek0-6b4vii9pln60907e
+                  permissionId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^pm-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: ID of the permission (also referred to as "role" in the dashboard).
+                    example: pm-37vj4-jkr4l-lc9945spfftkne57
+                  identityId:
+                    type: string
+                    description: ID of the identity the permission is assigned to. Can be a user ID, a service account ID, a personal access token (PAT) ID, or a user group ID.
+                  isImmutable:
+                    type: boolean
+                    description: Whether this assignment is system-managed and cannot be modified.
+                  dateCreated:
+                    type: string
+                    format: date-time
+                    description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the assignment was created.'
+                    example: 2023-04-14 20:41:28.715000+00:00
+                  dateUpdated:
+                    type: string
+                    format: date-time
+                    description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the assignment was last updated.'
+                    example: 2023-04-14 20:41:28.715000+00:00
+                required:
+                - id
+                - permissionId
+                - identityId
+                - isImmutable
+                - dateCreated
+                - dateUpdated
+                additionalProperties: false
+    get:
+      operationId: listAssignments
+      x-dfns-deprecated-operation-id: listPermissionAssignments
+      summary: List Permission Assignments
+      tags:
+      - Permissions
+      security:
+      - authenticationToken: []
+      description: Lists all permission (role) assignments for a given permission.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Assignments:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
           content:
             application/json:
               schema:
@@ -58,92 +566,1519 @@ paths:
                   items:
                     type: array
                     items:
-                      $ref: '#/components/schemas/Permission'
-  /permissions/{permissionId}:
-    get:
-      operationId: getPermission
-      tags:
-      - Permissions
-      summary: Get a permission by id
-      parameters:
-      - in: path
-        name: permissionId
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: The permission.
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Permission'
-  /permissions/{permissionId}/assignments:
+                      allOf:
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^as-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: ID of the permission assignment.
+                            example: as-1vcmc-qrek0-6b4vii9pln60907e
+                          permissionId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^pm-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: ID of the permission (also referred to as "role" in the dashboard).
+                            example: pm-37vj4-jkr4l-lc9945spfftkne57
+                          identityId:
+                            type: string
+                            description: ID of the identity the permission is assigned to. Can be a user ID, a service account ID, a personal access token (PAT) ID, or a user group ID.
+                          isImmutable:
+                            type: boolean
+                            description: Whether this assignment is system-managed and cannot be modified.
+                          dateCreated:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the assignment was created.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          dateUpdated:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the assignment was last updated.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                        required:
+                        - id
+                        - permissionId
+                        - identityId
+                        - isImmutable
+                        - dateCreated
+                        - dateUpdated
+                        additionalProperties: false
+                      - type: object
+                        properties:
+                          pendingChangeRequest:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                minLength: 1
+                                maxLength: 64
+                                pattern: ^cr-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                                description: ID of the change request.
+                                example: cr-6uunn-bm6ja-f6rmod5kqrk5rbel
+                              requester:
+                                $ref: '#/components/schemas/ChangeRequestRequester'
+                              status:
+                                type: string
+                                enum:
+                                - Applied
+                                - Failed
+                                - Pending
+                                - Rejected
+                                description: Current status of the change request.
+                              entityId:
+                                type: string
+                                description: ID of the entity being changed.
+                              userActionId:
+                                type: string
+                                description: User action of the change request.
+                              dateCreated:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the change request was created.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                              dateResolved:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the change request was resolved.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                              approvalId:
+                                type: string
+                                minLength: 1
+                                maxLength: 64
+                                pattern: ^ap-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                                example: ap-2a9in-tt2a1-983lho480p35ejd0
+                              kind:
+                                type: string
+                                enum:
+                                - Assignment
+                              operationKind:
+                                type: string
+                                enum:
+                                - Create
+                                - Delete
+                              body:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 64
+                                    pattern: ^as-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                                    description: ID of the permission assignment.
+                                    example: as-1vcmc-qrek0-6b4vii9pln60907e
+                                  permissionId:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 64
+                                    pattern: ^pm-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                                    description: ID of the permission (also referred to as "role" in the dashboard).
+                                    example: pm-37vj4-jkr4l-lc9945spfftkne57
+                                  identityId:
+                                    type: string
+                                    description: ID of the identity the permission is assigned to. Can be a user ID, a service account ID, or a personal access token (PAT) ID.
+                                  isImmutable:
+                                    type: boolean
+                                    description: Whether this assignment is system-managed and cannot be modified.
+                                required:
+                                - id
+                                - permissionId
+                                - identityId
+                                - isImmutable
+                                additionalProperties: false
+                            required:
+                            - id
+                            - requester
+                            - status
+                            - entityId
+                            - dateCreated
+                            - kind
+                            - operationKind
+                            - body
+                            additionalProperties: false
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /permissions:
     post:
-      operationId: createPermissionAssignment
+      operationId: createPermission
+      summary: Create Permission
       tags:
       - Permissions
-      summary: Assign a permission to an identity
-      description: Assigns a permission to a user, service account, or PAT.
       security:
-      - BearerAuth: []
-        AppId: []
-        UserAction: []
-      parameters:
-      - in: path
-        name: permissionId
-        required: true
-        schema:
-          type: string
+      - authenticationToken: []
+        userActionSignature: []
+      description: Creates a new permission (also referred to as "role" in the dashboard) that grants access to the specified API operations.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Create`: Always required."
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-              - identityId
               properties:
-                identityId:
+                name:
                   type: string
+                  minLength: 1
+                  maxLength: 100
+                  description: Human-readable name for the permission (role).
+                operations:
+                  type: array
+                  items:
+                    anyOf:
+                    - type: string
+                      enum:
+                      - Auth:Logs:Read
+                      - Auth:Users:Create
+                      - Auth:Users:Read
+                      - Auth:Users:Update
+                      - Auth:Users:Activate
+                      - Auth:Users:Deactivate
+                      - Auth:Users:Delete
+                      - Auth:UserGroups:Create
+                      - Auth:UserGroups:Read
+                      - Auth:UserGroups:Update
+                      - Auth:UserGroups:Delete
+                      - Auth:UserGroups:Members:Read
+                      - Auth:UserGroups:Members:Add
+                      - Auth:UserGroups:Members:Remove
+                      - Auth:ServiceAccounts:Create
+                      - Auth:ServiceAccounts:Read
+                      - Auth:ServiceAccounts:Update
+                      - Auth:ServiceAccounts:Activate
+                      - Auth:ServiceAccounts:Deactivate
+                      - Auth:ServiceAccounts:Delete
+                      - Auth:Pats:Create
+                      - Auth:Delegated:Register
+                      - Auth:Delegated:Login
+                      - Auth:Delegated:Recover
+                      - Agreements:Read
+                      - Agreements:Accept
+                      - Exchanges:Create
+                      - Exchanges:Read
+                      - Exchanges:Delete
+                      - Exchanges:Deposits:Create
+                      - Exchanges:Withdrawals:Create
+                      - FeeSponsors:Create
+                      - FeeSponsors:Read
+                      - FeeSponsors:Update
+                      - FeeSponsors:Delete
+                      - FeeSponsors:Use
+                      - Orgs:Read
+                      - Orgs:Update
+                      - Orgs:Settings:Read
+                      - Orgs:Settings:Update
+                      - Permissions:Create
+                      - Permissions:Read
+                      - Permissions:Update
+                      - Permissions:Assign
+                      - Permissions:Revoke
+                      - Permissions:Delete
+                      - Permissions:Assignments:Read
+                      - Policies:Create
+                      - Policies:Read
+                      - Policies:Update
+                      - Policies:Delete
+                      - Policies:Evaluations:Read
+                      - Policies:Evaluations:Vote
+                      - Registry:Addresses:Create
+                      - Registry:Addresses:Read
+                      - Registry:Addresses:Update
+                      - Registry:Addresses:Delete
+                      - Registry:ContractSchemas:Create
+                      - Registry:ContractSchemas:Read
+                      - Registry:ContractSchemas:Delete
+                      - Registry:VerifiedAssets:Create
+                      - Registry:VerifiedAssets:Read
+                      - Registry:VerifiedAssets:Delete
+                      - Stakes:Create
+                      - Stakes:Read
+                      - Stakes:Update
+                      - Swaps:Create
+                      - Swaps:Read
+                      - Payouts:Create
+                      - Payouts:Read
+                      - Payouts:Update
+                      - Payins:Create
+                      - Payins:Read
+                      - Allocations:Create
+                      - Allocations:Update
+                      - Allocations:Read
+                      - Keys:Create
+                      - Keys:Read
+                      - Keys:Update
+                      - Keys:Reuse
+                      - Keys:Delegate
+                      - Keys:Import
+                      - Keys:Export
+                      - Keys:Delete
+                      - Keys:Vrf:Derive
+                      - Keys:ChildKeys:Create
+                      - Keys:Signatures:Create
+                      - Keys:Signatures:Read
+                      - KeyStores:Read
+                      - KeyStores:Instructions:Cancel
+                      - KeyStores:Instructions:Fleets:Create
+                      - KeyStores:Instructions:Fleets:Clone
+                      - KeyStores:Instructions:Fleets:Users:Add
+                      - KeyStores:Instructions:Fleets:Keys:Harvest
+                      - KeyStores:Instructions:Fleets:Provisioners:Add
+                      - KeyStores:Instructions:Keys:ProveControl
+                      - KeyStores:Instructions:Keys:Sign
+                      - Networks:Canton:Validators:Create
+                      - Networks:Canton:Validators:Read
+                      - Networks:Canton:Validators:Update
+                      - Networks:Canton:Validators:Delete
+                      - Networks:Transactions:Reindex
+                      - Wallets:Create
+                      - Wallets:Read
+                      - Wallets:Update
+                      - Wallets:Tags:Add
+                      - Wallets:Tags:Remove
+                      - Wallets:Transactions:Create
+                      - Wallets:Transactions:Read
+                      - Wallets:Transactions:Abort
+                      - Wallets:Transfers:Create
+                      - Wallets:Transfers:Read
+                      - Wallets:Transfers:Abort
+                      - Wallets:Offers:Read
+                      - Wallets:Offers:Settle
+                      - AddressWatches:Create
+                      - AddressWatches:Read
+                      - AddressWatches:Delete
+                      - Vaults:Create
+                      - Vaults:Read
+                      - Vaults:Update
+                      - Vaults:Tags:Add
+                      - Vaults:Tags:Remove
+                      - Vaults:Quarantines:Release
+                      - Vaults:Locks:Create
+                      - Vaults:Locks:Release
+                      - Vaults:Locks:Transfer
+                      - Vaults:Transfers:Create
+                      - Webhooks:Create
+                      - Webhooks:Read
+                      - Webhooks:Update
+                      - Webhooks:Delete
+                      - Webhooks:Ping
+                      - Webhooks:Events:Read
+                      - Billing:Read
+                      - Billing:Manage
+                      - Activities:Read
+                      - Analytics:Read
+                    - type: string
+                      enum:
+                      - Auth:Register:Delegated
+                      - Auth:Login:Delegated
+                      - Auth:Recover:Delegated
+                      - Agreements:Acceptance:Create
+                      - Agreements:Acceptance:Read
+                      - Events:Read
+                      - Permissions:Archive
+                      - Policies:Archive
+                      - Policies:Approvals:Read
+                      - Policies:Approvals:Approve
+                      - Signers:ListSigners
+                      - Payouts:Write
+                      - Keys:Derive
+                      - Networks:CantonValidators:Create
+                      - Networks:CantonValidators:Read
+                      - Networks:CantonValidators:Update
+                      - Networks:CantonValidators:Delete
+                      - Wallets:Tags:Delete
+                      - Vaults:Tags:Delete
+                      - Vaults:Addresses:Create
+                      - Vaults:Locks:Delete
+                      - Billing:Write
+                      - KeyStores:Fleets:Cancel
+                      - KeyStores:Fleets:Create
+                      - KeyStores:Fleets:Clone
+                      - KeyStores:Fleets:AddMacUser
+                      - KeyStores:Fleets:AddProvisioner
+                      - KeyStores:Fleets:KeyHarvest
+                      - KeyStores:ProofOfControl:Create
+                      - KeyStores:OnchainSignatures:Create
+                      - Tenant:Billing:Write
+                      - Tenant:Settings:Write
+                  minItems: 1
+                  description: List of API operations this permission grants access to. See [Permissions List](https://docs.dfns.co/core-concepts/roles-and-permissions#list-of-permissions) for available operations.
+              required:
+              - name
+              - operations
+              additionalProperties: false
       responses:
         '200':
-          description: The created assignment.
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+    get:
+      operationId: listPermissions
+      summary: List Permissions
+      tags:
+      - Permissions
+      security:
+      - authenticationToken: []
+      description: Lists all permissions (roles) in the organization.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
           content:
             application/json:
               schema:
                 type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      allOf:
+                      - $ref: '#/components/schemas/Permission'
+                      - type: object
+                        properties:
+                          pendingChangeRequest:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                minLength: 1
+                                maxLength: 64
+                                pattern: ^cr-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                                description: ID of the change request.
+                                example: cr-6uunn-bm6ja-f6rmod5kqrk5rbel
+                              requester:
+                                $ref: '#/components/schemas/ChangeRequestRequester'
+                              status:
+                                type: string
+                                enum:
+                                - Applied
+                                - Failed
+                                - Pending
+                                - Rejected
+                                description: Current status of the change request.
+                              entityId:
+                                type: string
+                                description: ID of the entity being changed.
+                              userActionId:
+                                type: string
+                                description: User action of the change request.
+                              dateCreated:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the change request was created.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                              dateResolved:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the change request was resolved.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                              approvalId:
+                                type: string
+                                minLength: 1
+                                maxLength: 64
+                                pattern: ^ap-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                                example: ap-2a9in-tt2a1-983lho480p35ejd0
+                              kind:
+                                type: string
+                                enum:
+                                - Permission
+                              operationKind:
+                                type: string
+                                enum:
+                                - Update
+                              body:
+                                type: object
+                                properties:
+                                  id:
+                                    type: string
+                                    minLength: 1
+                                    maxLength: 64
+                                    pattern: ^pm-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                                    description: ID of the permission (also referred to as "role" in the dashboard).
+                                    example: pm-37vj4-jkr4l-lc9945spfftkne57
+                                  name:
+                                    type: string
+                                    description: Human-readable name of the permission (role).
+                                  status:
+                                    type: string
+                                    enum:
+                                    - Active
+                                    description: Current status of the permission.
+                                  operations:
+                                    type: array
+                                    items:
+                                      type: string
+                                    description: List of API operations this permission grants access to. See [Permissions List](https://docs.dfns.co/core-concepts/roles-and-permissions#list-of-permissions) for available operations.
+                                  isImmutable:
+                                    type: boolean
+                                    description: Whether this permission is system-managed and cannot be modified.
+                                  isArchived:
+                                    type: boolean
+                                    description: Whether this permission has been archived (soft-deleted).
+                                required:
+                                - id
+                                - name
+                                - status
+                                - operations
+                                - isImmutable
+                                - isArchived
+                                additionalProperties: false
+                            required:
+                            - id
+                            - requester
+                            - status
+                            - entityId
+                            - dateCreated
+                            - kind
+                            - operationKind
+                            - body
+                            additionalProperties: false
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /permissions/{permissionId}/assignments/{assignmentId}:
+    delete:
+      operationId: revokePermission
+      summary: Revoke Permission
+      tags:
+      - Permissions
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Revokes a permission (role) assignment, removing the identity's access to the operations granted by the permission.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Permissions:Revoke`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: ID of the permission (also referred to as "role" in the dashboard).
+        required: true
+        description: ID of the permission (also referred to as "role" in the dashboard).
+        name: permissionId
+        in: path
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^as-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: ID of the permission assignment.
+        required: true
+        description: ID of the permission assignment.
+        name: assignmentId
+        in: path
+      - schema:
+          type:
+          - boolean
+          - 'null'
+          default: false
+          description: If true, bypasses the approval process and revokes immediately.
+        required: false
+        description: If true, bypasses the approval process and revokes immediately.
+        name: force
+        in: query
+      responses:
+        '200':
+          description: Success
 components:
   schemas:
+    ChangeRequestRequester:
+      type: object
+      properties:
+        userId:
+          type: string
+        tokenId:
+          type: string
+        appId:
+          type: string
+      required:
+      - userId
+      description: The user who initiated the change request.
     Permission:
       type: object
       properties:
         id:
           type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^pm-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: ID of the permission (also referred to as "role" in the dashboard).
+          example: pm-37vj4-jkr4l-lc9945spfftkne57
         name:
           type: string
+          description: Human-readable name of the permission (role).
         operations:
           type: array
           items:
             type: string
+          description: List of API operations this permission grants access to. See [Permissions List](https://docs.dfns.co/core-concepts/roles-and-permissions#list-of-permissions) for available operations.
         status:
           type: string
           enum:
           - Active
-          - Archived
+          description: Current status of the permission.
+        isImmutable:
+          type: boolean
+          description: Whether this permission is system-managed and cannot be modified.
+        isArchived:
+          type: boolean
+          description: Whether this permission has been archived (soft-deleted).
+        dateCreated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the permission was created.'
+          example: 2023-04-14 20:41:28.715000+00:00
+        dateUpdated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Date the permission was last updated.'
+          example: 2023-04-14 20:41:28.715000+00:00
+      required:
+      - id
+      - name
+      - operations
+      - status
+      - isImmutable
+      - isArchived
+      - dateCreated
+      - dateUpdated
+      additionalProperties: false
   securitySchemes:
-    BearerAuth:
+    authenticationToken:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
-    AppId:
-      type: apiKey
-      in: header
-      name: X-DFNS-APPID
-      description: The Dfns application (app) id the request is made on behalf of.
-    UserAction:
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
       type: apiKey
       in: header
       name: X-DFNS-USERACTION
-      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

@@ -1,0 +1,2582 @@
+openapi: 3.2.0
+info:
+  version: 2.0.249
+  title: Dfns Staking API
+servers:
+- url: https://api.dfns.io
+  description: Default - Europe
+- url: https://api.uae.dfns.io
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
+tags:
+- name: Staking
+paths:
+  /staking/stakes:
+    post:
+      operationId: createStake
+      summary: Create Stake
+      tags:
+      - Staking
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Create a new stake.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Stakes:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+              - oneOf:
+                - type: object
+                  properties:
+                    protocol:
+                      type: string
+                      enum:
+                      - Ethereum
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Id of the Dfns wallet making the deposit.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    provider:
+                      type: string
+                      enum:
+                      - Figment
+                      description: Staking Provider
+                    amount:
+                      type: string
+                      pattern: ^\d+$
+                      description: Transaction amount denominated in min units
+                  required:
+                  - protocol
+                  - walletId
+                  - provider
+                  - amount
+                  title: Ethereum
+                - type: object
+                  properties:
+                    protocol:
+                      type: string
+                      enum:
+                      - Iota
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Id of the Dfns wallet making the deposit.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    validator:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{64}$
+                    amount:
+                      type: string
+                      pattern: ^\d+$
+                      description: Transaction amount denominated in min units
+                    lockedIotas:
+                      type: array
+                      items:
+                        type: string
+                        pattern: ^0x[0-9a-fA-F]{64}$
+                      minItems: 1
+                  required:
+                  - protocol
+                  - walletId
+                  - validator
+                  - amount
+                  title: Iota
+                - type: object
+                  properties:
+                    protocol:
+                      type: string
+                      enum:
+                      - Xdc
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Id of the Dfns wallet making the deposit.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    candidate:
+                      type: string
+                      description: Coinbase address of the XDC masternode to register
+                    amount:
+                      type: string
+                      pattern: ^\d+$
+                      description: Transaction amount denominated in wei (min 10,000,000 XDC)
+                  required:
+                  - protocol
+                  - walletId
+                  - candidate
+                  - amount
+                  title: Xdc
+              - type: object
+                properties:
+                  externalId:
+                    type: string
+            examples:
+              Ethereum:
+                value:
+                  externalId: ext-123
+                  walletId: wa-4g991-s29to-9hrq4nbuto6ih33b
+                  protocol: Ethereum
+                  provider: Figment
+                  amount: '32000000000000000000'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Stake'
+                - type: object
+                  properties:
+                    actions:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/StakeAction'
+                  required:
+                  - actions
+    get:
+      operationId: listStakes
+      summary: List Stakes
+      tags:
+      - Staking
+      security:
+      - authenticationToken: []
+      description: Retrieve the list of stakes.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Stakes:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Stake'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /staking/stakes/{stakeId}/actions:
+    post:
+      operationId: createStakeAction
+      summary: Create Stake Action
+      tags:
+      - Staking
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Create a new action for an existing stake.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Stakes:Update`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: stakeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+              - anyOf:
+                - oneOf:
+                  - type: object
+                    properties:
+                      protocol:
+                        type: string
+                        enum:
+                        - Iota
+                      kind:
+                        type: string
+                        enum:
+                        - Withdraw
+                      amount:
+                        type: string
+                        pattern: ^\d+$
+                    required:
+                    - protocol
+                    - kind
+                    - amount
+                    title: IOTA Withdrawal
+                  - type: object
+                    properties:
+                      protocol:
+                        type: string
+                        enum:
+                        - Iota
+                      kind:
+                        type: string
+                        enum:
+                        - Deposit
+                      amount:
+                        type: string
+                        pattern: ^\d+$
+                      lockedIotas:
+                        type: array
+                        items:
+                          type: string
+                          pattern: ^0x[0-9a-fA-F]{64}$
+                    required:
+                    - protocol
+                    - kind
+                    - amount
+                    title: IOTA Deposit
+                - type: object
+                  properties:
+                    protocol:
+                      type: string
+                      enum:
+                      - Ethereum
+                    kind:
+                      type: string
+                      enum:
+                      - Withdraw
+                  required:
+                  - protocol
+                  - kind
+                  title: Ethereum Withdrawal
+                - oneOf:
+                  - type: object
+                    properties:
+                      protocol:
+                        type: string
+                        enum:
+                        - Xdc
+                      kind:
+                        type: string
+                        enum:
+                        - Withdraw
+                    required:
+                    - protocol
+                    - kind
+                    title: XDC Withdrawal
+                  - type: object
+                    properties:
+                      protocol:
+                        type: string
+                        enum:
+                        - Xdc
+                      kind:
+                        type: string
+                        enum:
+                        - Unbond
+                    required:
+                    - protocol
+                    - kind
+                    title: XDC Unbond
+              - type: object
+                properties:
+                  externalId:
+                    type: string
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Stake'
+                - type: object
+                  properties:
+                    actions:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/StakeAction'
+                  required:
+                  - actions
+    get:
+      operationId: listStakeActions
+      summary: List Stake Actions
+      tags:
+      - Staking
+      security:
+      - authenticationToken: []
+      description: Retrieve the list of actions for a specific stake.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Stakes:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: stakeId
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/StakeAction'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /staking/stakes/{stakeId}:
+    get:
+      operationId: getStakes
+      summary: Get Stakes
+      tags:
+      - Staking
+      security:
+      - authenticationToken: []
+      description: Retrieve the details of a specific stake.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Stakes:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: stakeId
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Stake'
+                - type: object
+                  properties:
+                    actions:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/StakeAction'
+                  required:
+                  - actions
+  /staking/stakes/{stakeId}/rewards:
+    get:
+      operationId: getStakeRewards
+      summary: Get Stake Rewards
+      tags:
+      - Staking
+      security:
+      - authenticationToken: []
+      description: Retrieves the rewards linked to a specific stake.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Stakes:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: stakeId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  balance:
+                    type: string
+                required:
+                - symbol
+                - balance
+components:
+  schemas:
+    StakeAction:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^stka-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          example: stka-567ui-9g9b7-ftgvpstk8qfa71b4
+        stakeId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          example: stk-0pmu3-tog2k-fdtn0teii2i4r13f
+        status:
+          type: string
+          enum:
+          - PendingPolicyApproval
+          - InProgress
+          - Completed
+          - Failed
+          - Rejected
+          description: 'Status of the stake action.
+
+
+            | Status | Definition |
+
+            | --- | --- |
+
+            | `PendingPolicyApproval` | The action is pending approval due to a policy applied to the wallet. |
+
+            | `InProgress` | The action has been initiated and is being processed. |
+
+            | `Completed` | The action has been successfully completed. |
+
+            | `Failed` | The action has failed. Check failureReason for details. |
+
+            | `Rejected` | The action has been rejected by a policy approval action. |'
+        transactionId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^tx-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Deprecated.
+          example: tx-583hu-sp2p7-slvb9nqpa3hd8bus
+        signatureId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^sig-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Deprecated.
+          example: sig-4sfvl-f4iha-umighfi3hk4t54dr
+        transactionHash:
+          type: string
+          description: Deprecated.
+        kind:
+          type: string
+          enum:
+          - Stake
+          - Unbond
+          - Deposit
+          - Withdraw
+          description: 'The type of staking action being performed.
+
+
+            | Kind | Definition |
+
+            | --- | --- |
+
+            | `Stake` | Delegate funds to a validator to begin earning rewards. |
+
+            | `Unbond` | Initiate the unbonding process to release staked funds (subject to cooldown). |
+
+            | `Deposit` | Add additional funds to an existing stake position. |
+
+            | `Withdraw` | Withdraw unbonded funds from the stake position. |'
+        requester:
+          $ref: '#/components/schemas/Requester'
+        requestBody:
+          anyOf:
+          - allOf:
+            - oneOf:
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Babylon
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  duration:
+                    type: number
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                - duration
+                title: Babylon
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Ethereum
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                title: Ethereum
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Iota
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  validator:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]{64}$
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  lockedIotas:
+                    type: array
+                    items:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{64}$
+                    minItems: 1
+                required:
+                - protocol
+                - walletId
+                - validator
+                - amount
+                title: Iota
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Xdc
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  candidate:
+                    type: string
+                    description: Coinbase address of the XDC masternode to register
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in wei (min 10,000,000 XDC)
+                required:
+                - protocol
+                - walletId
+                - candidate
+                - amount
+                title: Xdc
+            - type: object
+              properties:
+                externalId:
+                  type: string
+          - allOf:
+            - anyOf:
+              - oneOf:
+                - type: object
+                  properties:
+                    protocol:
+                      type: string
+                      enum:
+                      - Iota
+                    kind:
+                      type: string
+                      enum:
+                      - Withdraw
+                    amount:
+                      type: string
+                      pattern: ^\d+$
+                  required:
+                  - protocol
+                  - kind
+                  - amount
+                  title: IOTA Withdrawal
+                - type: object
+                  properties:
+                    protocol:
+                      type: string
+                      enum:
+                      - Iota
+                    kind:
+                      type: string
+                      enum:
+                      - Deposit
+                    amount:
+                      type: string
+                      pattern: ^\d+$
+                    lockedIotas:
+                      type: array
+                      items:
+                        type: string
+                        pattern: ^0x[0-9a-fA-F]{64}$
+                  required:
+                  - protocol
+                  - kind
+                  - amount
+                  title: IOTA Deposit
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Ethereum
+                  kind:
+                    type: string
+                    enum:
+                    - Withdraw
+                required:
+                - protocol
+                - kind
+                title: Ethereum Withdrawal
+              - oneOf:
+                - type: object
+                  properties:
+                    protocol:
+                      type: string
+                      enum:
+                      - Xdc
+                    kind:
+                      type: string
+                      enum:
+                      - Withdraw
+                  required:
+                  - protocol
+                  - kind
+                  title: XDC Withdrawal
+                - type: object
+                  properties:
+                    protocol:
+                      type: string
+                      enum:
+                      - Xdc
+                    kind:
+                      type: string
+                      enum:
+                      - Unbond
+                  required:
+                  - protocol
+                  - kind
+                  title: XDC Unbond
+            - type: object
+              properties:
+                externalId:
+                  type: string
+        failureReason:
+          type: string
+          description: The failure reason, if any. Only present when status is Failed.
+        dateCreated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). When the stake action was created.'
+          example: 2023-04-14 20:41:28.715000+00:00
+      required:
+      - id
+      - stakeId
+      - status
+      - kind
+      - requester
+      - requestBody
+      - dateCreated
+    Stake:
+      oneOf:
+      - type: object
+        properties:
+          id:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+            example: stk-0pmu3-tog2k-fdtn0teii2i4r13f
+          provider:
+            type: string
+            enum:
+            - Figment
+            description: The staking infrastructure provider used to manage the stake.
+          walletId:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+            description: Wallet id.
+            example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+          status:
+            type: string
+            enum:
+            - Active
+            - Failed
+            - Staking
+            - Unbonding
+            - Unbond
+            - Withdrawing
+            - Withdrawn
+            description: 'Status of the stake position.
+
+
+              | Status | Definition |
+
+              | --- | --- |
+
+              | `Staking` | The stake is being created and funds are being delegated to the validator. |
+
+              | `Active` | The stake is active and earning rewards. |
+
+              | `Unbonding` | The stake is in the process of being unbonded (cooldown period). |
+
+              | `Unbond` | The stake has been unbonded and is ready for withdrawal. |
+
+              | `Withdrawing` | The staked funds are in the process of being withdrawn. |
+
+              | `Withdrawn` | The staked funds have been fully withdrawn. |
+
+              | `Failed` | The staking operation failed. |'
+          requester:
+            $ref: '#/components/schemas/Requester'
+          requestBody:
+            allOf:
+            - oneOf:
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Babylon
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  duration:
+                    type: number
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                - duration
+                title: Babylon
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Ethereum
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                title: Ethereum
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Iota
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  validator:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]{64}$
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  lockedIotas:
+                    type: array
+                    items:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{64}$
+                    minItems: 1
+                required:
+                - protocol
+                - walletId
+                - validator
+                - amount
+                title: Iota
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Xdc
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  candidate:
+                    type: string
+                    description: Coinbase address of the XDC masternode to register
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in wei (min 10,000,000 XDC)
+                required:
+                - protocol
+                - walletId
+                - candidate
+                - amount
+                title: Xdc
+            - type: object
+              properties:
+                externalId:
+                  type: string
+          dateCreated:
+            type: string
+            format: date-time
+            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). When the stake was created.'
+            example: 2023-04-14 20:41:28.715000+00:00
+          protocol:
+            type: string
+            enum:
+            - Babylon
+          data:
+            type: object
+            properties:
+              finalityProviders:
+                type: array
+                items:
+                  type: string
+              covenantPubkeys:
+                type: array
+                items:
+                  type: string
+              magicBytes:
+                type: string
+              covenantThreshold:
+                type: number
+              minUnbondingTime:
+                type: number
+              lockHeight:
+                type: number
+            required:
+            - finalityProviders
+            - covenantPubkeys
+            - magicBytes
+            - covenantThreshold
+            - minUnbondingTime
+            - lockHeight
+        required:
+        - id
+        - walletId
+        - status
+        - requester
+        - requestBody
+        - dateCreated
+        - protocol
+        - data
+        title: Babylon
+      - type: object
+        properties:
+          id:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+            example: stk-0pmu3-tog2k-fdtn0teii2i4r13f
+          provider:
+            type: string
+            enum:
+            - Figment
+            description: The staking infrastructure provider used to manage the stake.
+          walletId:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+            description: Wallet id.
+            example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+          status:
+            type: string
+            enum:
+            - Active
+            - Failed
+            - Staking
+            - Unbonding
+            - Unbond
+            - Withdrawing
+            - Withdrawn
+            description: 'Status of the stake position.
+
+
+              | Status | Definition |
+
+              | --- | --- |
+
+              | `Staking` | The stake is being created and funds are being delegated to the validator. |
+
+              | `Active` | The stake is active and earning rewards. |
+
+              | `Unbonding` | The stake is in the process of being unbonded (cooldown period). |
+
+              | `Unbond` | The stake has been unbonded and is ready for withdrawal. |
+
+              | `Withdrawing` | The staked funds are in the process of being withdrawn. |
+
+              | `Withdrawn` | The staked funds have been fully withdrawn. |
+
+              | `Failed` | The staking operation failed. |'
+          requester:
+            $ref: '#/components/schemas/Requester'
+          requestBody:
+            allOf:
+            - oneOf:
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Babylon
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  duration:
+                    type: number
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                - duration
+                title: Babylon
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Ethereum
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                title: Ethereum
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Iota
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  validator:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]{64}$
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  lockedIotas:
+                    type: array
+                    items:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{64}$
+                    minItems: 1
+                required:
+                - protocol
+                - walletId
+                - validator
+                - amount
+                title: Iota
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Xdc
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  candidate:
+                    type: string
+                    description: Coinbase address of the XDC masternode to register
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in wei (min 10,000,000 XDC)
+                required:
+                - protocol
+                - walletId
+                - candidate
+                - amount
+                title: Xdc
+            - type: object
+              properties:
+                externalId:
+                  type: string
+          dateCreated:
+            type: string
+            format: date-time
+            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). When the stake was created.'
+            example: 2023-04-14 20:41:28.715000+00:00
+          protocol:
+            type: string
+            enum:
+            - Iota
+          data:
+            type: object
+            properties:
+              kind:
+                type: string
+                enum:
+                - Iota
+                - LockedIota
+              stakedObjects:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                    amount:
+                      type: string
+                    expirationDate:
+                      type: string
+                  required:
+                  - id
+                  - amount
+              amount:
+                type: string
+              validator:
+                type: string
+            required:
+            - kind
+            - amount
+            - validator
+        required:
+        - id
+        - walletId
+        - status
+        - requester
+        - requestBody
+        - dateCreated
+        - protocol
+        - data
+        title: Iota
+      - type: object
+        properties:
+          id:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+            example: stk-0pmu3-tog2k-fdtn0teii2i4r13f
+          provider:
+            type: string
+            enum:
+            - Figment
+            description: The staking infrastructure provider used to manage the stake.
+          walletId:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+            description: Wallet id.
+            example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+          status:
+            type: string
+            enum:
+            - Active
+            - Failed
+            - Staking
+            - Unbonding
+            - Unbond
+            - Withdrawing
+            - Withdrawn
+            description: 'Status of the stake position.
+
+
+              | Status | Definition |
+
+              | --- | --- |
+
+              | `Staking` | The stake is being created and funds are being delegated to the validator. |
+
+              | `Active` | The stake is active and earning rewards. |
+
+              | `Unbonding` | The stake is in the process of being unbonded (cooldown period). |
+
+              | `Unbond` | The stake has been unbonded and is ready for withdrawal. |
+
+              | `Withdrawing` | The staked funds are in the process of being withdrawn. |
+
+              | `Withdrawn` | The staked funds have been fully withdrawn. |
+
+              | `Failed` | The staking operation failed. |'
+          requester:
+            $ref: '#/components/schemas/Requester'
+          requestBody:
+            allOf:
+            - oneOf:
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Babylon
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  duration:
+                    type: number
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                - duration
+                title: Babylon
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Ethereum
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                title: Ethereum
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Iota
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  validator:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]{64}$
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  lockedIotas:
+                    type: array
+                    items:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{64}$
+                    minItems: 1
+                required:
+                - protocol
+                - walletId
+                - validator
+                - amount
+                title: Iota
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Xdc
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  candidate:
+                    type: string
+                    description: Coinbase address of the XDC masternode to register
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in wei (min 10,000,000 XDC)
+                required:
+                - protocol
+                - walletId
+                - candidate
+                - amount
+                title: Xdc
+            - type: object
+              properties:
+                externalId:
+                  type: string
+          dateCreated:
+            type: string
+            format: date-time
+            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). When the stake was created.'
+            example: 2023-04-14 20:41:28.715000+00:00
+          protocol:
+            type: string
+            enum:
+            - Ethereum
+          data:
+            type:
+            - object
+            - 'null'
+            properties:
+              validator:
+                type: object
+                properties:
+                  pubkey:
+                    type: string
+                  withdrawalAddress:
+                    type: string
+                required:
+                - pubkey
+                - withdrawalAddress
+            required:
+            - validator
+        required:
+        - id
+        - walletId
+        - status
+        - requester
+        - requestBody
+        - dateCreated
+        - protocol
+        - data
+        title: Ethereum
+      - type: object
+        properties:
+          id:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^stk-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+            example: stk-0pmu3-tog2k-fdtn0teii2i4r13f
+          provider:
+            type: string
+            enum:
+            - Figment
+            description: The staking infrastructure provider used to manage the stake.
+          walletId:
+            type: string
+            minLength: 1
+            maxLength: 64
+            pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+            description: Wallet id.
+            example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+          status:
+            type: string
+            enum:
+            - Active
+            - Failed
+            - Staking
+            - Unbonding
+            - Unbond
+            - Withdrawing
+            - Withdrawn
+            description: 'Status of the stake position.
+
+
+              | Status | Definition |
+
+              | --- | --- |
+
+              | `Staking` | The stake is being created and funds are being delegated to the validator. |
+
+              | `Active` | The stake is active and earning rewards. |
+
+              | `Unbonding` | The stake is in the process of being unbonded (cooldown period). |
+
+              | `Unbond` | The stake has been unbonded and is ready for withdrawal. |
+
+              | `Withdrawing` | The staked funds are in the process of being withdrawn. |
+
+              | `Withdrawn` | The staked funds have been fully withdrawn. |
+
+              | `Failed` | The staking operation failed. |'
+          requester:
+            $ref: '#/components/schemas/Requester'
+          requestBody:
+            allOf:
+            - oneOf:
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Babylon
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  duration:
+                    type: number
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                - duration
+                title: Babylon
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Ethereum
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  provider:
+                    type: string
+                    enum:
+                    - Figment
+                    description: Staking Provider
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                required:
+                - protocol
+                - walletId
+                - provider
+                - amount
+                title: Ethereum
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Iota
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  validator:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]{64}$
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in min units
+                  lockedIotas:
+                    type: array
+                    items:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{64}$
+                    minItems: 1
+                required:
+                - protocol
+                - walletId
+                - validator
+                - amount
+                title: Iota
+              - type: object
+                properties:
+                  protocol:
+                    type: string
+                    enum:
+                    - Xdc
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the Dfns wallet making the deposit.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  candidate:
+                    type: string
+                    description: Coinbase address of the XDC masternode to register
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Transaction amount denominated in wei (min 10,000,000 XDC)
+                required:
+                - protocol
+                - walletId
+                - candidate
+                - amount
+                title: Xdc
+            - type: object
+              properties:
+                externalId:
+                  type: string
+          dateCreated:
+            type: string
+            format: date-time
+            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). When the stake was created.'
+            example: 2023-04-14 20:41:28.715000+00:00
+          protocol:
+            type: string
+            enum:
+            - Xdc
+          data:
+            type: object
+            properties:
+              candidate:
+                type: string
+              amount:
+                type: string
+              proposeBlockNumber:
+                type: string
+              withdrawBlockNumber:
+                type: string
+              withdrawIndex:
+                type: string
+            required:
+            - candidate
+            - amount
+        required:
+        - id
+        - walletId
+        - status
+        - requester
+        - requestBody
+        - dateCreated
+        - protocol
+        - data
+        title: Xdc
+    Requester:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^us-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User id.
+          example: us-6b58p-r53sr-rlrd3l5cj3uc4ome
+        tokenId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^to-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Token id.
+          example: to-202a0-cdo33-o65mbt6q758lvvnt
+      required:
+      - userId
+      description: The user who initiated the request.
+  securitySchemes:
+    authenticationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

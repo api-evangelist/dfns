@@ -1,0 +1,4623 @@
+openapi: 3.2.0
+info:
+  version: 2.0.249
+  title: Dfns Address Watches API
+servers:
+- url: https://api.dfns.io
+  description: Default - Europe
+- url: https://api.uae.dfns.io
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
+tags:
+- name: Address Watches
+paths:
+  /address-watches:
+    post:
+      operationId: createAddressWatch
+      summary: Create Address Watch
+      tags:
+      - Address Watches
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: 'Registers an on chain address to watch. An address watch is not controlled by Dfns: it holds no key, it cannot sign or move funds. The indexer matches on chain activity touching the address and sends the corresponding webhooks.
+
+
+        The address must already exist on chain and is normalized to the form the indexer matches on (lowercase for EVM networks). Only networks that support address watches are accepted. A given address can only be watched once per network within an organization while the watch is Active.
+
+
+        Watching an address that was previously deleted re-activates the deleted watch, with the ID, the nickname and the externalId it had before: the request body is only used to find it.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`AddressWatches:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                network:
+                  allOf:
+                  - $ref: '#/components/schemas/AddressWatchNetwork'
+                  - description: Network to watch the address on. Only networks that support address watches are accepted.
+                address:
+                  type: string
+                  minLength: 1
+                  maxLength: 256
+                  description: The on chain address to watch.
+                name:
+                  type: string
+                  maxLength: 100
+                  description: Address watch nickname.
+                externalId:
+                  type: string
+                  maxLength: 100
+                  description: User-defined value that can be used to correlate the entity with an external system.
+              required:
+              - network
+              - address
+              additionalProperties: false
+            examples:
+              Ethereum:
+                value:
+                  network: Ethereum
+                  address: '0x00e3495cf6af59008f22ffaf32d4c92ac33dac47'
+                  name: exchange-hot-wallet
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressWatch'
+    get:
+      operationId: listAddressWatches
+      summary: List Address Watches
+      tags:
+      - Address Watches
+      security:
+      - authenticationToken: []
+      description: Retrieves the list of address watches in your organization. Pagination is supported via limit and paginationToken parameters.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`AddressWatches:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AddressWatch'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /address-watches/{addressWatchId}:
+    delete:
+      operationId: deleteAddressWatch
+      summary: Delete Address Watch
+      tags:
+      - Address Watches
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Deletes an address watch. Once deleted, the address is not watched anymore, no webhook is sent for it, and it won't count in your overall organisation wallet count. Watching the same address again on the same network re-activates this watch, with the same ID and the same history.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`AddressWatches:Delete`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^aw-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: The address watch to delete.
+        required: true
+        description: The address watch to delete.
+        name: addressWatchId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressWatch'
+    get:
+      operationId: getAddressWatch
+      summary: Get Address Watch
+      tags:
+      - Address Watches
+      security:
+      - authenticationToken: []
+      description: Retrieves an address watch by its ID.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`AddressWatches:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^aw-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: The address watch to retrieve.
+        required: true
+        description: The address watch to retrieve.
+        name: addressWatchId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddressWatch'
+  /address-watches/{addressWatchId}/assets:
+    get:
+      operationId: getAddressWatchAssets
+      summary: Get Address Watch Assets
+      tags:
+      - Address Watches
+      security:
+      - authenticationToken: []
+      description: Retrieves the list of assets held by the address watch, as tracked by the indexer. Balances are tracked from the moment the watch is created.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`AddressWatches:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^aw-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: The address watch to retrieve the assets of.
+        required: true
+        description: The address watch to retrieve the assets of.
+        name: addressWatchId
+        in: path
+      - schema:
+          type: string
+          enum:
+          - 'true'
+        required: false
+        name: netWorth
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  addressWatchId:
+                    type: string
+                  network:
+                    $ref: '#/components/schemas/AddressWatchNetwork'
+                  assets:
+                    type: array
+                    items:
+                      allOf:
+                      - oneOf:
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Native
+                          required:
+                          - kind
+                          title: Native assets
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Aip21
+                            metadata:
+                              type: string
+                          required:
+                          - kind
+                          - metadata
+                          title: Aptos Fungible Assets (AIP-21)
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Asa
+                            assetId:
+                              type: string
+                          required:
+                          - kind
+                          - assetId
+                          title: Algorand Standard Assets (ASAs)
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Cis2
+                            tokenAddress:
+                              type: string
+                          required:
+                          - kind
+                          - tokenAddress
+                          title: Concordium CIS-2 tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Erc20
+                              - Snip2
+                              - Trc20
+                            contract:
+                              type: string
+                          required:
+                          - kind
+                          - contract
+                          title: EVM ERC-20/Starknet SNIP-2/TRON TRC-20 tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Erc7984
+                            contract:
+                              type: string
+                          required:
+                          - kind
+                          - contract
+                          title: EVM ERC-7984 confidential tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Hts
+                            tokenId:
+                              type: string
+                          required:
+                          - kind
+                          - tokenId
+                          title: Hedera tokens (HTS)
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Iou
+                            currency:
+                              type: string
+                            issuer:
+                              type: string
+                          required:
+                          - kind
+                          - currency
+                          - issuer
+                          title: XRP Ledger IOU tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Cip56
+                            instrumentId:
+                              type: string
+                            instrumentAdmin:
+                              type: string
+                          required:
+                          - kind
+                          - instrumentId
+                          - instrumentAdmin
+                          title: Canton CIP-56 tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Coin
+                              - LockedCoin
+                            coin:
+                              type: string
+                          required:
+                          - kind
+                          - coin
+                          title: Sui/IOTA Coin assets
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Xls33
+                            issuanceId:
+                              type: string
+                          required:
+                          - kind
+                          - issuanceId
+                          title: XRP Ledger MPL (XLS-33) tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Asset
+                            assetId:
+                              type: string
+                          required:
+                          - kind
+                          - assetId
+                          title: Polymesh/Cardano assets
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Cis7
+                            tokenId:
+                              type: string
+                          required:
+                          - kind
+                          - tokenId
+                          title: Concordium PLTs ( CIS-7 tokens)
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Sep41
+                            issuer:
+                              type: string
+                            assetCode:
+                              type: string
+                          required:
+                          - kind
+                          - issuer
+                          - assetCode
+                          title: Stellar SEP-41 tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Trc10
+                            tokenId:
+                              type: string
+                          required:
+                          - kind
+                          - tokenId
+                          title: TRON TRC-10 tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Spl
+                              - Spl2022
+                            mint:
+                              type: string
+                          required:
+                          - kind
+                          - mint
+                          title: Solana SPL/SPL2022 tokens
+                        - type: object
+                          properties:
+                            kind:
+                              type: string
+                              enum:
+                              - Tep74
+                            master:
+                              type: string
+                          required:
+                          - kind
+                          - master
+                          title: TON TEP-74 Jetton
+                      - type: object
+                        properties:
+                          symbol:
+                            type: string
+                          decimals:
+                            type: number
+                          verified:
+                            type: boolean
+                          balance:
+                            type: string
+                          quotes:
+                            type: object
+                            properties:
+                              USD:
+                                type: number
+                            description: Current market price of the asset, keyed by fiat currency (e.g. USD). Sourced from DFNS market data.
+                        required:
+                        - decimals
+                        - balance
+                  netWorth:
+                    type: object
+                    properties:
+                      USD:
+                        type: number
+                required:
+                - addressWatchId
+                - network
+                - assets
+  /address-watches/{addressWatchId}/blockchain-events:
+    get:
+      operationId: getAddressWatchBlockchainEvents
+      summary: Get Address Watch Blockchain Events
+      tags:
+      - Address Watches
+      security:
+      - authenticationToken: []
+      description: 'Retrieves a list of decoded blockchain events indexed for the specified address watch.
+
+
+        Blockchain events are not value transfers: asset and token transfers are listed by
+
+        Get Address Watch History instead.
+
+        Events from the same transaction share the same `txHash` across both lists.
+
+
+        Items are sorted by descending block number; within one block the item order is not the on-chain
+
+        order. `index` is the block scoped log index as a decimal string: sort by `blockNumber` and the
+
+        numeric value of `index` to recover the on-chain order. Webhook delivery is at-least-once and
+
+        unordered; use `id` to deduplicate.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`AddressWatches:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^aw-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Address watch you want to get the blockchain events from.
+        required: true
+        description: Address watch you want to get the blockchain events from.
+        name: addressWatchId
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+        required: false
+        name: name
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+        required: false
+        name: contract
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+        required: false
+        name: txHash
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AddressWatchBlockchainEvent'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                  addressWatchId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^aw-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Address watch id.
+                    example: aw-0pbh4-7sdh4-2occ0e4r1g7obe8c
+                  network:
+                    $ref: '#/components/schemas/AddressWatchNetwork'
+                required:
+                - items
+                - addressWatchId
+                - network
+  /address-watches/{addressWatchId}/history:
+    get:
+      operationId: getAddressWatchHistory
+      summary: Get Address Watch History
+      tags:
+      - Address Watches
+      security:
+      - authenticationToken: []
+      description: 'Retrieves the list of indexed on chain activities for the specified address watch.
+
+
+        The list reflects the indexed on chain activity from the moment the watch was created. Events from before the watch are not backfilled.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`AddressWatches:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^aw-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Address watch you want to get the history from.
+        required: true
+        description: Address watch you want to get the history from.
+        name: addressWatchId
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      - schema:
+          type: string
+          enum:
+          - In
+          - Out
+          description: Transfer direction.
+        required: false
+        description: Transfer direction.
+        name: direction
+        in: query
+      - schema:
+          type: string
+          enum:
+          - NativeTransfer
+          - Aip21Transfer
+          - AsaTransfer
+          - AssetTransfer
+          - Cip56Transfer
+          - Cis2Transfer
+          - Cis7Transfer
+          - CoinTransfer
+          - Erc20Transfer
+          - Erc721Transfer
+          - Erc7984Transfer
+          - HederaErc20Transfer
+          - HederaErc721Transfer
+          - Hip17Transfer
+          - HtsTransfer
+          - IouTransfer
+          - LockedCoinTransfer
+          - Sep41Transfer
+          - Snip2Transfer
+          - Snip3Transfer
+          - SplTransfer
+          - Spl2022Transfer
+          - Tep74Transfer
+          - Trc10Transfer
+          - Trc20Transfer
+          - Trc721Transfer
+          - UtxoTransfer
+          - Xls33Transfer
+          description: Blockchain event kind.
+        required: false
+        description: Blockchain event kind.
+        name: kind
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+        required: false
+        name: contract
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AddressWatchHistoryEvent'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                  addressWatchId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^aw-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Address watch id.
+                    example: aw-0pbh4-7sdh4-2occ0e4r1g7obe8c
+                  network:
+                    $ref: '#/components/schemas/AddressWatchNetwork'
+                required:
+                - items
+                - addressWatchId
+                - network
+components:
+  schemas:
+    AddressWatchBlockchainEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Deterministic event id, safe to deduplicate on.
+        addressWatchId:
+          type: string
+        network:
+          $ref: '#/components/schemas/AddressWatchNetwork'
+        name:
+          type: string
+          description: Decoded event name.
+        blockNumber:
+          type: number
+        txHash:
+          type: string
+        index:
+          type: string
+          description: Block scoped log index of the event, as a decimal string.
+        timestamp:
+          type: string
+        status:
+          type: string
+          enum:
+          - Included
+          - Confirmed
+          description: Webhooks are emitted only once Confirmed; the list can contain Included events on networks with unfinalized indexing.
+        data:
+          type: object
+          additionalProperties: {}
+          description: Decoded event fields, the emitting contract included.
+      required:
+      - id
+      - addressWatchId
+      - network
+      - name
+      - blockNumber
+      - txHash
+      - index
+      - timestamp
+      - status
+      - data
+      example:
+        id: ce-2c5o1-eaqqp-xxxxxxxxxxxxxxxx
+        addressWatchId: aw-1f04s-lqc9q-xxxxxxxxxxxxxxxx
+        network: Ethereum
+        name: OrderSettled
+        blockNumber: 19036906
+        txHash: '0x8e88793607610a83798eb5ec6dde861f3e459c7e4a22e78b0d2e675b86d0d1e7'
+        index: '134'
+        timestamp: 2026-01-18 23:03:59+00:00
+        status: Confirmed
+        data:
+          contract: '0x11a4a5aa04d840f0c692ba297dd60c2871ad0b56'
+          orderId: '0x0102030405060708090a0b0c0d0e0f10'
+          amount: '1000'
+          currency: EUR
+    AddressWatchHistoryEvent:
+      oneOf:
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - NativeTransfer
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          memo:
+            type: string
+          liquidityPool:
+            type: string
+          balanceId:
+            type: string
+          symbol:
+            type: string
+            description: '@deprecated use metadata.asset.symbol instead'
+          decimals:
+            type: number
+            description: '@deprecated use metadata.asset.decimals instead'
+          verified:
+            type: boolean
+            description: '@deprecated use metadata.asset.verified instead'
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - value
+        - symbol
+        - decimals
+        - addressWatchId
+        title: Native Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Aip21Transfer
+          metadataAddress:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - metadataAddress
+        - from
+        - to
+        - value
+        - addressWatchId
+        title: Aptos Fungible Asset (AIP-21) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - AsaTransfer
+          assetId:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          optIn:
+            type: boolean
+          optOut:
+            type: boolean
+          clawback:
+            type: boolean
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - assetId
+        - from
+        - to
+        - value
+        - addressWatchId
+        title: Algorand Standard Asset Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - AssetTransfer
+          assetId:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - assetId
+        - value
+        - addressWatchId
+        title: Cardano Asset Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Cip56Transfer
+          instrumentId:
+            type: string
+          instrumentAdmin:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          memo:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - instrumentId
+        - instrumentAdmin
+        - from
+        - to
+        - value
+        - addressWatchId
+        title: Canton Standard Token (CIP-56) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - CoinTransfer
+          coin:
+            type: string
+          from:
+            type: string
+          tos:
+            type: array
+            items:
+              type: string
+          value:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - coin
+        - from
+        - value
+        - addressWatchId
+        title: Sui Coin Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Cis2Transfer
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          tokenAddress:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - value
+        - tokenAddress
+        - addressWatchId
+        title: Concordium CIS2 Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Cis7Transfer
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          tokenId:
+            type: string
+          memo:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - value
+        - tokenId
+        - addressWatchId
+        title: Concordium CIS7 Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Erc20Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          symbol:
+            type: string
+            description: '@deprecated use metadata.asset.symbol instead'
+          decimals:
+            type: number
+            description: '@deprecated use metadata.asset.decimals instead'
+          verified:
+            type: boolean
+            description: '@deprecated use metadata.asset.verified instead'
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - value
+        - decimals
+        - addressWatchId
+        title: EVM Fungible Token (ERC-20) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Erc721Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          tokenId:
+            type: string
+          fee:
+            type: string
+          symbol:
+            type: string
+            description: '@deprecated use metadata.asset.symbol instead'
+          verified:
+            type: boolean
+            description: '@deprecated use metadata.asset.verified instead'
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - tokenId
+        - addressWatchId
+        title: EVM Non Fungible Token (ERC-721) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Erc7984Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          symbol:
+            type: string
+            description: '@deprecated use metadata.asset.symbol instead'
+          decimals:
+            type: number
+            description: '@deprecated use metadata.asset.decimals instead'
+          verified:
+            type: boolean
+            description: '@deprecated use metadata.asset.verified instead'
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - value
+        - decimals
+        - addressWatchId
+        title: EVM Confidential Token (ERC-7984) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - HederaErc20Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          transactionId:
+            type: string
+          evmTxHash:
+            type: string
+            description: EVM keccak256 hash of the HIP-410 inner tx. Absent on legacy-migrated rows.
+          symbol:
+            type: string
+            description: '@deprecated use metadata.asset.symbol instead'
+          decimals:
+            type: number
+            description: '@deprecated use metadata.asset.decimals instead'
+          verified:
+            type: boolean
+            description: '@deprecated use metadata.asset.verified instead'
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - value
+        - decimals
+        - addressWatchId
+        title: Hedera EVM Fungible Token (ERC-20) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - HederaErc721Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          tokenId:
+            type: string
+          fee:
+            type: string
+          transactionId:
+            type: string
+          evmTxHash:
+            type: string
+            description: EVM keccak256 hash of the HIP-410 inner tx. Absent on legacy-migrated rows.
+          symbol:
+            type: string
+            description: '@deprecated use metadata.asset.symbol instead'
+          verified:
+            type: boolean
+            description: '@deprecated use metadata.asset.verified instead'
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - tokenId
+        - addressWatchId
+        title: Hedera EVM Non Fungible Token (ERC-721) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Hip17Transfer
+          tokenId:
+            type: string
+          serialNumber:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          fee:
+            type: string
+          transactionId:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - tokenId
+        - serialNumber
+        - addressWatchId
+        title: HIP17 Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - HtsTransfer
+          tokenId:
+            type: string
+          froms:
+            type: array
+            items:
+              type: string
+          tos:
+            type: array
+            items:
+              type: string
+          value:
+            type: string
+          fee:
+            type: string
+          transactionId:
+            type: string
+          evmTxHash:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - froms
+        - tos
+        - value
+        - addressWatchId
+        title: HTS Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - IouTransfer
+          currency:
+            type: string
+          issuer:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          memo:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - currency
+        - issuer
+        - value
+        - addressWatchId
+        title: XRPL IOU Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - LockedCoinTransfer
+          coin:
+            type: string
+          from:
+            type: string
+          tos:
+            type: array
+            items:
+              type: string
+          value:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - coin
+        - from
+        - value
+        - addressWatchId
+        title: Locked Coin Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Xls33Transfer
+          issuanceId:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          memo:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - issuanceId
+        - value
+        - addressWatchId
+        title: XRPL XLS-33 Token Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Sep41Transfer
+          issuer:
+            type: string
+          assetCode:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          memo:
+            type: string
+          liquidityPool:
+            type: string
+          balanceId:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - issuer
+        - assetCode
+        - from
+        - to
+        - value
+        - addressWatchId
+        title: Stellar Classic Assets (SEP-41) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Snip2Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - value
+        - addressWatchId
+        title: Snip2 Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Snip3Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          tokenId:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - tokenId
+        - addressWatchId
+        title: Snip3 Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - SplTransfer
+            - Spl2022Transfer
+          from:
+            type: string
+          to:
+            type: string
+          mint:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - mint
+        - value
+        - addressWatchId
+        title: Solana Program Library Token (SPL and SPL 2022) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Tep74Transfer
+          master:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          memo:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - master
+        - from
+        - value
+        - addressWatchId
+        title: TON Jetton (TEP-74) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Trc10Transfer
+          tokenId:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - tokenId
+        - from
+        - to
+        - value
+        - addressWatchId
+        title: TRON Native Fungible Token (TRC-10) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Trc20Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          value:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - value
+        - addressWatchId
+        title: TRON Smart Contract Fungible Token (TRC-20) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - Trc721Transfer
+          contract:
+            type: string
+          from:
+            type: string
+          to:
+            type: string
+          tokenId:
+            type: string
+          fee:
+            type: string
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - contract
+        - from
+        - to
+        - tokenId
+        - addressWatchId
+        title: TRON Non Fungible Token (TRC-721) Transfer
+      - type: object
+        properties:
+          direction:
+            type: string
+            enum:
+            - In
+            - Out
+          network:
+            $ref: '#/components/schemas/Network'
+          blockNumber:
+            type: number
+          txHash:
+            type: string
+          index:
+            type: string
+          timestamp:
+            type: string
+          status:
+            type: string
+            enum:
+            - Included
+            - Confirmed
+          metadata:
+            type: object
+            properties:
+              asset:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+              fee:
+                type: object
+                properties:
+                  symbol:
+                    type: string
+                  decimals:
+                    type: integer
+                    description: Number of decimals used by the asset, see [this guide](https://docs.dfns.co/guides/developers/displaying-balances) for more details.
+                  verified:
+                    type: boolean
+                    description: Whether the asset is verified by DFNS as legitimate.
+                  quotes:
+                    type: object
+                    properties:
+                      EUR:
+                        type: number
+                      USD:
+                        type: number
+                    description: Corresponding asset price in USD at the time of transfer.
+            required:
+            - asset
+          kind:
+            type: string
+            enum:
+            - UtxoTransfer
+          assetId:
+            type: string
+            description: Only set for Cardano asset transfers.
+          froms:
+            type: array
+            items:
+              type: string
+          tos:
+            type: array
+            items:
+              type: string
+          value:
+            type: string
+          fee:
+            type: string
+          outputs:
+            type: array
+            items:
+              type: object
+              properties:
+                index:
+                  type: number
+                address:
+                  type: string
+                value:
+                  type: string
+              required:
+              - index
+              - address
+              - value
+            description: 'Outbound transfers only: per-recipient outputs of the transaction, change excluded.'
+          addressWatchId:
+            type: string
+        required:
+        - direction
+        - network
+        - blockNumber
+        - txHash
+        - timestamp
+        - status
+        - metadata
+        - kind
+        - froms
+        - tos
+        - value
+        - addressWatchId
+        title: UTXO Transfer
+      example:
+        kind: Erc20Transfer
+        addressWatchId: aw-3f9b2-8k4m1-xxxxxxxxxxxxxxxx
+        network: Ethereum
+        direction: In
+        blockNumber: 19036906
+        timestamp: 2026-07-03 23:03:59+00:00
+        status: Confirmed
+        txHash: '0x8e88793607610a83798eb5ec6dde861f3e459c7e4a22e78b0d2e675b86d0d1e7'
+        index: '134'
+        contract: '0xa0b86991c6218b36c1d19d4a2e9eb0ce3606eb48'
+        from: '0xea09cf8a006493566f8a8fd3d0b32ebff5939d6a'
+        to: '0xc42754e6f79f15082613b2b4ebead83dcf8116b6'
+        value: '1000000'
+        decimals: 6
+        fee: '1542993669053672'
+        metadata:
+          asset:
+            symbol: USDC
+            decimals: 6
+            verified: true
+          fee:
+            symbol: ETH
+            decimals: 18
+            verified: true
+    Network:
+      type: string
+      title: Network
+      enum:
+      - Algorand
+      - AlgorandTestnet
+      - Aptos
+      - AptosTestnet
+      - ArbitrumOne
+      - ArbitrumSepolia
+      - Arc
+      - ArcTestnet
+      - Areum
+      - AvalancheC
+      - AvalancheCFuji
+      - Base
+      - BaseSepolia
+      - Berachain
+      - BerachainBepolia
+      - Bitcoin
+      - BitcoinSignet
+      - BitcoinTestnet4
+      - BitcoinCash
+      - Bob
+      - BobSepolia
+      - Bsc
+      - BscTestnet
+      - Canton
+      - CantonTestnet
+      - Cardano
+      - CardanoPreprod
+      - Concordium
+      - ConcordiumTestnet
+      - Celo
+      - CeloSepolia
+      - Codex
+      - CodexSepolia
+      - CosmosHub4
+      - CosmosIcsTestnet
+      - Dogecoin
+      - DogecoinTestnet
+      - Ethereum
+      - EthereumClassic
+      - EthereumClassicMordor
+      - EthereumSepolia
+      - EthereumHoodi
+      - FlareC
+      - FlareCCoston2
+      - FlowEvm
+      - FlowEvmTestnet
+      - Hedera
+      - HederaTestnet
+      - Ink
+      - InkSepolia
+      - InternetComputer
+      - Ion
+      - IonTestnet
+      - Iota
+      - IotaTestnet
+      - Kusama
+      - KusamaAssetHub
+      - Litecoin
+      - LitecoinTestnet
+      - Monad
+      - MonadTestnet
+      - Movement
+      - MovementTestnet
+      - Near
+      - NearTestnet
+      - Optimism
+      - OptimismSepolia
+      - Origyn
+      - Plasma
+      - PlasmaTestnet
+      - Plume
+      - PlumeSepolia
+      - Paseo
+      - PaseoAssetHub
+      - Polkadot
+      - PolkadotAssetHub
+      - Polygon
+      - PolygonAmoy
+      - Polymesh
+      - PolymeshTestnet
+      - Rayls
+      - RaylsTestnet
+      - Robinhood
+      - RobinhoodSepolia
+      - SeiAtlantic2
+      - SeiPacific1
+      - Solana
+      - SolanaDevnet
+      - Sonic
+      - SonicTestnet
+      - Starknet
+      - StarknetSepolia
+      - Stellar
+      - StellarTestnet
+      - Sui
+      - SuiTestnet
+      - Tezos
+      - TezosShadownet
+      - Tempo
+      - TempoModerato
+      - Tsc
+      - TscTestnet1
+      - Ton
+      - TonTestnet
+      - Tron
+      - TronNile
+      - Westend
+      - WestendAssetHub
+      - Xdc
+      - XdcApothem
+      - XLayer
+      - XLayerSepolia
+      - XrpLedger
+      - XrpLedgerTestnet
+    AddressWatch:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^aw-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: ID of the address watch.
+          example: aw-0pbh4-7sdh4-2occ0e4r1g7obe8c
+        network:
+          $ref: '#/components/schemas/AddressWatchNetwork'
+        address:
+          type: string
+          description: The watched on chain address.
+        name:
+          type: string
+          maxLength: 100
+          description: Address watch nickname.
+        externalId:
+          type: string
+          maxLength: 100
+          description: User-defined value that can be used to correlate the entity with an external system.
+        status:
+          type: string
+          enum:
+          - Active
+          - Archived
+          description: Address watch status.
+        dateCreated:
+          type: string
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date string when the address watch was created.'
+          example: 2026-07-03 20:41:28.715000+00:00
+        dateDeleted:
+          type: string
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date string when the address watch was archived.'
+          example: 2026-07-03 20:41:28.715000+00:00
+      required:
+      - id
+      - network
+      - address
+      - status
+      - dateCreated
+      additionalProperties: false
+      example:
+        id: aw-3f9b2-8k4m1-xxxxxxxxxxxxxxxx
+        network: Ethereum
+        address: '0x00e3495cf6af59008f22ffaf32d4c92ac33dac47'
+        name: exchange-hot-wallet
+        status: Active
+        dateCreated: 2026-07-03 20:41:28.715000+00:00
+    AddressWatchNetwork:
+      type: string
+      description: Network the address is watched on.
+      title: Network
+      enum:
+      - ArbitrumOne
+      - ArbitrumSepolia
+      - Arc
+      - ArcTestnet
+      - Areum
+      - AvalancheC
+      - AvalancheCFuji
+      - Base
+      - BaseSepolia
+      - Berachain
+      - BerachainBepolia
+      - Bob
+      - BobSepolia
+      - Bsc
+      - BscTestnet
+      - Celo
+      - CeloSepolia
+      - Codex
+      - CodexSepolia
+      - Ethereum
+      - EthereumClassic
+      - EthereumClassicMordor
+      - EthereumSepolia
+      - EthereumHoodi
+      - FlareC
+      - FlareCCoston2
+      - FlowEvm
+      - FlowEvmTestnet
+      - Ink
+      - InkSepolia
+      - Monad
+      - MonadTestnet
+      - Optimism
+      - OptimismSepolia
+      - Plasma
+      - PlasmaTestnet
+      - Plume
+      - PlumeSepolia
+      - Polygon
+      - PolygonAmoy
+      - Rayls
+      - RaylsTestnet
+      - Robinhood
+      - RobinhoodSepolia
+      - SeiAtlantic2
+      - SeiPacific1
+      - Solana
+      - SolanaDevnet
+      - Sonic
+      - SonicTestnet
+      - Tempo
+      - TempoModerato
+      - Tsc
+      - TscTestnet1
+      - Xdc
+      - XdcApothem
+      - XLayer
+      - XLayerSepolia
+  securitySchemes:
+    authenticationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

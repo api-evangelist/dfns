@@ -1,0 +1,3375 @@
+openapi: 3.2.0
+info:
+  version: 2.0.249
+  title: Dfns Signers API
+servers:
+- url: https://api.dfns.io
+  description: Default - Europe
+- url: https://api.uae.dfns.io
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
+tags:
+- name: Signers
+paths:
+  /key-stores/{storeId}/fleet-operations/cancel:
+    post:
+      operationId: cancelFleetOperation
+      summary: Cancel Fleet Operation
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Cancel`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                groupId:
+                  type: string
+                  minLength: 1
+                reason:
+                  type: string
+                  minLength: 1
+                  maxLength: 2000
+              required:
+              - groupId
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  groupId:
+                    type: string
+                  storeId:
+                    type: string
+                  orgId:
+                    type: string
+                  status:
+                    type: string
+                    enum:
+                    - Initialized
+                    - InReview
+                    - Rejected
+                    - Approved
+                    - Canceled
+                  createdBy:
+                    type: string
+                  submittedBy:
+                    type:
+                    - string
+                    - 'null'
+                  dateSubmitted:
+                    type:
+                    - string
+                    - 'null'
+                  reviewedBy:
+                    type:
+                    - string
+                    - 'null'
+                  dateReviewed:
+                    type:
+                    - string
+                    - 'null'
+                  canceledBy:
+                    type:
+                    - string
+                    - 'null'
+                  dateCanceled:
+                    type:
+                    - string
+                    - 'null'
+                  reason:
+                    type:
+                    - string
+                    - 'null'
+                  dateCreated:
+                    type: string
+                  operations:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        operationId:
+                          type: string
+                        kind:
+                          type: string
+                          enum:
+                          - Genesis
+                          - Clone
+                          - AddMacUser
+                          - KeyHarvest
+                          - AddProvisioner
+                        status:
+                          type: string
+                          enum:
+                          - Initialized
+                          - InReview
+                          - Rejected
+                          - Approved
+                          - Canceled
+                        dateCreated:
+                          type: string
+                      required:
+                      - operationId
+                      - kind
+                      - status
+                      - dateCreated
+                required:
+                - groupId
+                - storeId
+                - orgId
+                - status
+                - createdBy
+                - submittedBy
+                - dateSubmitted
+                - reviewedBy
+                - dateReviewed
+                - canceledBy
+                - dateCanceled
+                - reason
+                - dateCreated
+                - operations
+  /key-stores/{storeId}/add-mac-user/input:
+    post:
+      operationId: createAddMacUserInput
+      summary: Create Add Mac User Input
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Creates the input archive for an add-mac-user fleet operation, which registers a new Mac operator machine with an HSM in the key store's trust set.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Users:Add`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - AddMacUser
+                macTargetSerial:
+                  type: string
+                  minLength: 1
+                hsmTargetSerial:
+                  type: string
+                  minLength: 1
+              required:
+              - kind
+              - macTargetSerial
+              - hsmTargetSerial
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/zip:
+              schema:
+                type: string
+                description: Zip archive containing `input/input.json`, the add-mac-user fleet-input document.
+  /key-stores/{storeId}/add-provisioner/input:
+    post:
+      operationId: createAddProvisionerInput
+      summary: Create Add Provisioner Input
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Creates the input archive for an add-provisioner fleet operation, which registers a new provisioner YubiKey into the key store's governance set.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Provisioners:Add`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - AddProvisioner
+                yubikeySerial:
+                  type: string
+                  minLength: 1
+                hsmTargetSerial:
+                  type: string
+                  minLength: 1
+              required:
+              - kind
+              - yubikeySerial
+              - hsmTargetSerial
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/zip:
+              schema:
+                type: string
+                description: Zip archive containing `input/input.json`, the add-provisioner fleet-input document.
+  /key-stores/{storeId}/clone/input:
+    post:
+      operationId: createCloneInput
+      summary: Create Clone Input
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Creates the input archive for a clone fleet operation, which replicates a key store from a source HSM to a target HSM.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Clone`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Clone
+                hsmSourceSerial:
+                  type: string
+                  minLength: 1
+                hsmTargetSerial:
+                  type: string
+                  minLength: 1
+                macTargetSerial:
+                  type: string
+                  minLength: 1
+              required:
+              - kind
+              - hsmSourceSerial
+              - hsmTargetSerial
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/zip:
+              schema:
+                type: string
+                description: Zip archive containing `input/input.json`, the clone fleet-input document.
+  /key-stores/{storeId}/genesis/input:
+    post:
+      operationId: createGenesisInput
+      summary: Create Genesis Input
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Creates the input archive for a genesis fleet operation, which provisions a new offline signer fleet and generates the key store's initial signing keys.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Create`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Genesis
+                numProvisioners:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                numOperational:
+                  type: integer
+                  minimum: 1
+                  maximum: 5
+                numSecp256k1:
+                  type: integer
+                  minimum: 0
+                  maximum: 2000
+                numEd25519:
+                  type: integer
+                  minimum: 0
+                  maximum: 2000
+                hsmGenesisSerial:
+                  type: string
+                  minLength: 1
+                macGenesisSerial:
+                  type: string
+                  minLength: 1
+                hsmGenesisFirmwareVersion:
+                  type: string
+                  enum:
+                  - '2.4'
+                debugOptions:
+                  type: object
+                  additionalProperties: {}
+                  description: 'Development environments only (rejected with a 400 in production). Deep-merged over the generated genesis `options` block: objects merge recursively, any other value (including new fields and type changes) replaces the existing value.'
+              required:
+              - kind
+              - numProvisioners
+              - numOperational
+              - numSecp256k1
+              - numEd25519
+              - hsmGenesisSerial
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/zip:
+              schema:
+                type: string
+                description: Zip archive containing `input/input.json`, the genesis fleet-input document.
+  /key-stores/{storeId}/key-harvest/input:
+    post:
+      operationId: createKeyHarvestInput
+      summary: Create Key Harvest Input
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Keys:Harvest`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - KeyHarvest
+                hsmTargetSerial:
+                  type: string
+                  minLength: 1
+                macTargetSerial:
+                  type: string
+                  minLength: 1
+                macTargetUsername:
+                  type: string
+                  minLength: 1
+                numSecp256k1:
+                  type: integer
+                  minimum: 0
+                  maximum: 2000
+                numEd25519:
+                  type: integer
+                  minimum: 0
+                  maximum: 2000
+              required:
+              - kind
+              - hsmTargetSerial
+              - macTargetSerial
+              - macTargetUsername
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/zip:
+              schema:
+                type: string
+                description: Zip archive containing `input/input.json`, the key-harvest fleet-input document.
+  /key-stores/{storeId}/onchain-sign/input:
+    post:
+      operationId: createOnchainSignInput
+      summary: Create Onchain Sign Input
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Creates the input archive for an onchain-sign operation covering the key store's pending signature requests.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Keys:Sign`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: {}
+              additionalProperties: false
+      responses:
+        '200':
+          description: Success
+          content:
+            application/zip:
+              schema:
+                type: string
+                description: Zip archive containing `input/input.json` and `input-annex/keys.jsonl` for the onchain-sign roundtrip.
+  /key-stores/{storeId}/proof-of-control/input:
+    post:
+      operationId: createProofOfControlInput
+      summary: Create Proof Of Control Input
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Creates the input archive for a proof-of-control operation covering the keys of the specified wallets.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Keys:ProveControl`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                walletIds:
+                  type: array
+                  items:
+                    type: string
+                    minLength: 1
+                  minItems: 1
+                  maxItems: 100
+              required:
+              - walletIds
+      responses:
+        '200':
+          description: Success
+          content:
+            application/zip:
+              schema:
+                type: string
+                description: Zip archive containing `input/input.json` (proof of control spec) and `input-annex/wrapped-keystore.jsonl` (one key per line).
+  /key-stores:
+    get:
+      operationId: listKeyStores
+      summary: List Key Stores
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+      description: Lists the key stores of your organization.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Read`: Always required."
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                        kind:
+                          type: string
+                          enum:
+                          - Hsm
+                          - Mpc
+                          - OfflineSigner
+                        name:
+                          type: string
+                        primary:
+                          type: boolean
+                      required:
+                      - id
+                      - kind
+                      - primary
+                required:
+                - items
+  /signers:
+    get:
+      operationId: listSigners
+      summary: List Signers
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+      description: Lists the signer clusters of your key store, including each signer's ID and encryption public key.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Read`: Always required."
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  clusters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        clusterId:
+                          type: string
+                        signers:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              signerId:
+                                type: string
+                              encryptionKey:
+                                type: string
+                            required:
+                            - signerId
+                            - encryptionKey
+                      required:
+                      - clusterId
+                      - signers
+                required:
+                - clusters
+  /key-stores/{storeId}/add-mac-user/output:
+    post:
+      operationId: submitAddMacUserOutput
+      summary: Submit Add Mac User Output
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Submits the output archive produced by the offline signer fleet for an add-mac-user operation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Users:Add`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    fileChecksum:
+                      type: string
+                      pattern: ^[a-f0-9]{64}$
+                    outputJson:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - fleet-output
+                        version:
+                          type: number
+                          enum:
+                          - 1
+                        status:
+                          type: string
+                          enum:
+                          - success
+                        org_id:
+                          type: string
+                          minLength: 1
+                        fleet_id:
+                          type: string
+                          minLength: 1
+                        fleet_label:
+                          type: string
+                          minLength: 1
+                        keystore_id:
+                          type: string
+                          minLength: 1
+                        group_id:
+                          type: string
+                          minLength: 1
+                        online_domain:
+                          type: string
+                          minLength: 1
+                        governance:
+                          type: object
+                          additionalProperties: {}
+                        outputs:
+                          type: object
+                          additionalProperties:
+                            type: object
+                            properties:
+                              success:
+                                oneOf:
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - genesis-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    provisioners:
+                                      type: object
+                                      additionalProperties:
+                                        type: string
+                                    hsm_sealed: {}
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        ed25519-start:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 0
+                                        error:
+                                          type:
+                                          - string
+                                          - 'null'
+                                        secp256k1-start:
+                                          type: integer
+                                          minimum: 0
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 0
+                                      required:
+                                      - ed25519-start
+                                      - ed25519
+                                      - error
+                                      - secp256k1-start
+                                      - secp256k1
+                                  required:
+                                  - type
+                                  - hsm_serial
+                                  - hsm_identity_key
+                                  - mac_serial
+                                  - mac_se_wrap_key_pub_key
+                                  - provisioners
+                                  - key_harvest
+                                  title: Genesis Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - clone-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Clone Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-mac-user
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_username:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Add Mac User Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-provisioner
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_label:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_public_key_hex:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    yubikey_serial:
+                                      type: string
+                                      minLength: 1
+                                  required:
+                                  - type
+                                  - provisioner_label
+                                  - provisioner_public_key_hex
+                                  - yubikey_serial
+                                  title: Add Provisioner Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - key-harvest
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_username:
+                                      type: string
+                                      minLength: 1
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 1
+                                        secp256k1_end:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 1
+                                        ed25519_end:
+                                          type: integer
+                                          minimum: 0
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - mac_target_serial
+                                  - mac_target_username
+                                  - key_harvest
+                                  title: Key Harvest Registration
+                            required:
+                            - success
+                      required:
+                      - type
+                      - version
+                      - status
+                      - org_id
+                      - fleet_id
+                      - fleet_label
+                      - keystore_id
+                      - group_id
+                      - online_domain
+                      - outputs
+                  required:
+                  - fileChecksum
+                  - outputJson
+                file:
+                  type: string
+                  format: binary
+              required:
+              - data
+              - file
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                - message
+  /key-stores/{storeId}/add-provisioner/output:
+    post:
+      operationId: submitAddProvisionerOutput
+      summary: Submit Add Provisioner Output
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Submits the output archive produced by the offline signer fleet for an add-provisioner operation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Provisioners:Add`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    fileChecksum:
+                      type: string
+                      pattern: ^[a-f0-9]{64}$
+                    outputJson:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - fleet-output
+                        version:
+                          type: number
+                          enum:
+                          - 1
+                        status:
+                          type: string
+                          enum:
+                          - success
+                        org_id:
+                          type: string
+                          minLength: 1
+                        fleet_id:
+                          type: string
+                          minLength: 1
+                        fleet_label:
+                          type: string
+                          minLength: 1
+                        keystore_id:
+                          type: string
+                          minLength: 1
+                        group_id:
+                          type: string
+                          minLength: 1
+                        online_domain:
+                          type: string
+                          minLength: 1
+                        governance:
+                          type: object
+                          additionalProperties: {}
+                        outputs:
+                          type: object
+                          additionalProperties:
+                            type: object
+                            properties:
+                              success:
+                                oneOf:
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - genesis-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    provisioners:
+                                      type: object
+                                      additionalProperties:
+                                        type: string
+                                    hsm_sealed: {}
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        ed25519-start:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 0
+                                        error:
+                                          type:
+                                          - string
+                                          - 'null'
+                                        secp256k1-start:
+                                          type: integer
+                                          minimum: 0
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 0
+                                      required:
+                                      - ed25519-start
+                                      - ed25519
+                                      - error
+                                      - secp256k1-start
+                                      - secp256k1
+                                  required:
+                                  - type
+                                  - hsm_serial
+                                  - hsm_identity_key
+                                  - mac_serial
+                                  - mac_se_wrap_key_pub_key
+                                  - provisioners
+                                  - key_harvest
+                                  title: Genesis Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - clone-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Clone Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-mac-user
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_username:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Add Mac User Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-provisioner
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_label:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_public_key_hex:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    yubikey_serial:
+                                      type: string
+                                      minLength: 1
+                                  required:
+                                  - type
+                                  - provisioner_label
+                                  - provisioner_public_key_hex
+                                  - yubikey_serial
+                                  title: Add Provisioner Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - key-harvest
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_username:
+                                      type: string
+                                      minLength: 1
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 1
+                                        secp256k1_end:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 1
+                                        ed25519_end:
+                                          type: integer
+                                          minimum: 0
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - mac_target_serial
+                                  - mac_target_username
+                                  - key_harvest
+                                  title: Key Harvest Registration
+                            required:
+                            - success
+                      required:
+                      - type
+                      - version
+                      - status
+                      - org_id
+                      - fleet_id
+                      - fleet_label
+                      - keystore_id
+                      - group_id
+                      - online_domain
+                      - outputs
+                  required:
+                  - fileChecksum
+                  - outputJson
+                file:
+                  type: string
+                  format: binary
+              required:
+              - data
+              - file
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                - message
+  /key-stores/{storeId}/clone/output:
+    post:
+      operationId: submitCloneOutput
+      summary: Submit Clone Output
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Submits the output archive produced by the offline signer fleet for a clone operation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Clone`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    fileChecksum:
+                      type: string
+                      pattern: ^[a-f0-9]{64}$
+                    outputJson:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - fleet-output
+                        version:
+                          type: number
+                          enum:
+                          - 1
+                        status:
+                          type: string
+                          enum:
+                          - success
+                        org_id:
+                          type: string
+                          minLength: 1
+                        fleet_id:
+                          type: string
+                          minLength: 1
+                        fleet_label:
+                          type: string
+                          minLength: 1
+                        keystore_id:
+                          type: string
+                          minLength: 1
+                        group_id:
+                          type: string
+                          minLength: 1
+                        online_domain:
+                          type: string
+                          minLength: 1
+                        governance:
+                          type: object
+                          additionalProperties: {}
+                        outputs:
+                          type: object
+                          additionalProperties:
+                            type: object
+                            properties:
+                              success:
+                                oneOf:
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - genesis-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    provisioners:
+                                      type: object
+                                      additionalProperties:
+                                        type: string
+                                    hsm_sealed: {}
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        ed25519-start:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 0
+                                        error:
+                                          type:
+                                          - string
+                                          - 'null'
+                                        secp256k1-start:
+                                          type: integer
+                                          minimum: 0
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 0
+                                      required:
+                                      - ed25519-start
+                                      - ed25519
+                                      - error
+                                      - secp256k1-start
+                                      - secp256k1
+                                  required:
+                                  - type
+                                  - hsm_serial
+                                  - hsm_identity_key
+                                  - mac_serial
+                                  - mac_se_wrap_key_pub_key
+                                  - provisioners
+                                  - key_harvest
+                                  title: Genesis Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - clone-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Clone Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-mac-user
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_username:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Add Mac User Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-provisioner
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_label:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_public_key_hex:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    yubikey_serial:
+                                      type: string
+                                      minLength: 1
+                                  required:
+                                  - type
+                                  - provisioner_label
+                                  - provisioner_public_key_hex
+                                  - yubikey_serial
+                                  title: Add Provisioner Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - key-harvest
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_username:
+                                      type: string
+                                      minLength: 1
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 1
+                                        secp256k1_end:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 1
+                                        ed25519_end:
+                                          type: integer
+                                          minimum: 0
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - mac_target_serial
+                                  - mac_target_username
+                                  - key_harvest
+                                  title: Key Harvest Registration
+                            required:
+                            - success
+                      required:
+                      - type
+                      - version
+                      - status
+                      - org_id
+                      - fleet_id
+                      - fleet_label
+                      - keystore_id
+                      - group_id
+                      - online_domain
+                      - outputs
+                  required:
+                  - fileChecksum
+                  - outputJson
+                file:
+                  type: string
+                  format: binary
+              required:
+              - data
+              - file
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                - message
+  /key-stores/{storeId}/genesis/output:
+    post:
+      operationId: submitGenesisOutput
+      summary: Submit Genesis Output
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Submits the output archive produced by the offline signer fleet for a genesis operation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Create`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    fileChecksum:
+                      type: string
+                      pattern: ^[a-f0-9]{64}$
+                    outputJson:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - fleet-output
+                        version:
+                          type: number
+                          enum:
+                          - 1
+                        status:
+                          type: string
+                          enum:
+                          - success
+                        org_id:
+                          type: string
+                          minLength: 1
+                        fleet_id:
+                          type: string
+                          minLength: 1
+                        fleet_label:
+                          type: string
+                          minLength: 1
+                        keystore_id:
+                          type: string
+                          minLength: 1
+                        group_id:
+                          type: string
+                          minLength: 1
+                        online_domain:
+                          type: string
+                          minLength: 1
+                        governance:
+                          type: object
+                          additionalProperties: {}
+                        outputs:
+                          type: object
+                          additionalProperties:
+                            type: object
+                            properties:
+                              success:
+                                oneOf:
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - genesis-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    provisioners:
+                                      type: object
+                                      additionalProperties:
+                                        type: string
+                                    hsm_sealed: {}
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        ed25519-start:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 0
+                                        error:
+                                          type:
+                                          - string
+                                          - 'null'
+                                        secp256k1-start:
+                                          type: integer
+                                          minimum: 0
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 0
+                                      required:
+                                      - ed25519-start
+                                      - ed25519
+                                      - error
+                                      - secp256k1-start
+                                      - secp256k1
+                                  required:
+                                  - type
+                                  - hsm_serial
+                                  - hsm_identity_key
+                                  - mac_serial
+                                  - mac_se_wrap_key_pub_key
+                                  - provisioners
+                                  - key_harvest
+                                  title: Genesis Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - clone-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Clone Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-mac-user
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_username:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Add Mac User Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-provisioner
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_label:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_public_key_hex:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    yubikey_serial:
+                                      type: string
+                                      minLength: 1
+                                  required:
+                                  - type
+                                  - provisioner_label
+                                  - provisioner_public_key_hex
+                                  - yubikey_serial
+                                  title: Add Provisioner Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - key-harvest
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_username:
+                                      type: string
+                                      minLength: 1
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 1
+                                        secp256k1_end:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 1
+                                        ed25519_end:
+                                          type: integer
+                                          minimum: 0
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - mac_target_serial
+                                  - mac_target_username
+                                  - key_harvest
+                                  title: Key Harvest Registration
+                            required:
+                            - success
+                      required:
+                      - type
+                      - version
+                      - status
+                      - org_id
+                      - fleet_id
+                      - fleet_label
+                      - keystore_id
+                      - group_id
+                      - online_domain
+                      - outputs
+                  required:
+                  - fileChecksum
+                  - outputJson
+                file:
+                  type: string
+                  format: binary
+              required:
+              - data
+              - file
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                - message
+  /key-stores/{storeId}/key-harvest/output:
+    post:
+      operationId: submitKeyHarvestOutput
+      summary: Submit Key Harvest Output
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Fleets:Keys:Harvest`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    fileChecksum:
+                      type: string
+                      pattern: ^[a-f0-9]{64}$
+                    outputJson:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - fleet-output
+                        version:
+                          type: number
+                          enum:
+                          - 1
+                        status:
+                          type: string
+                          enum:
+                          - success
+                        org_id:
+                          type: string
+                          minLength: 1
+                        fleet_id:
+                          type: string
+                          minLength: 1
+                        fleet_label:
+                          type: string
+                          minLength: 1
+                        keystore_id:
+                          type: string
+                          minLength: 1
+                        group_id:
+                          type: string
+                          minLength: 1
+                        online_domain:
+                          type: string
+                          minLength: 1
+                        governance:
+                          type: object
+                          additionalProperties: {}
+                        outputs:
+                          type: object
+                          additionalProperties:
+                            type: object
+                            properties:
+                              success:
+                                oneOf:
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - genesis-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    provisioners:
+                                      type: object
+                                      additionalProperties:
+                                        type: string
+                                    hsm_sealed: {}
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        ed25519-start:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 0
+                                        error:
+                                          type:
+                                          - string
+                                          - 'null'
+                                        secp256k1-start:
+                                          type: integer
+                                          minimum: 0
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 0
+                                      required:
+                                      - ed25519-start
+                                      - ed25519
+                                      - error
+                                      - secp256k1-start
+                                      - secp256k1
+                                  required:
+                                  - type
+                                  - hsm_serial
+                                  - hsm_identity_key
+                                  - mac_serial
+                                  - mac_se_wrap_key_pub_key
+                                  - provisioners
+                                  - key_harvest
+                                  title: Genesis Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - clone-registration
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Clone Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-mac-user
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    hsm_identity_key:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_username:
+                                      type: string
+                                      minLength: 1
+                                    mac_se_wrap_key_pub_key:
+                                      type: string
+                                      minLength: 1
+                                    hsm_sealed: {}
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - hsm_identity_key
+                                  - mac_target_serial
+                                  - mac_se_wrap_key_pub_key
+                                  title: Add Mac User Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - add-provisioner
+                                    ceremony_mode:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_label:
+                                      type: string
+                                      minLength: 1
+                                    provisioner_public_key_hex:
+                                      type: string
+                                      pattern: ^[a-f0-9]+$
+                                    yubikey_serial:
+                                      type: string
+                                      minLength: 1
+                                  required:
+                                  - type
+                                  - provisioner_label
+                                  - provisioner_public_key_hex
+                                  - yubikey_serial
+                                  title: Add Provisioner Registration
+                                - type: object
+                                  properties:
+                                    type:
+                                      type: string
+                                      enum:
+                                      - key-harvest
+                                    hsm_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_serial:
+                                      type: string
+                                      minLength: 1
+                                    mac_target_username:
+                                      type: string
+                                      minLength: 1
+                                    key_harvest:
+                                      type: object
+                                      properties:
+                                        secp256k1:
+                                          type: integer
+                                          minimum: 1
+                                        secp256k1_end:
+                                          type: integer
+                                          minimum: 0
+                                        ed25519:
+                                          type: integer
+                                          minimum: 1
+                                        ed25519_end:
+                                          type: integer
+                                          minimum: 0
+                                  required:
+                                  - type
+                                  - hsm_target_serial
+                                  - mac_target_serial
+                                  - mac_target_username
+                                  - key_harvest
+                                  title: Key Harvest Registration
+                            required:
+                            - success
+                      required:
+                      - type
+                      - version
+                      - status
+                      - org_id
+                      - fleet_id
+                      - fleet_label
+                      - keystore_id
+                      - group_id
+                      - online_domain
+                      - outputs
+                  required:
+                  - fileChecksum
+                  - outputJson
+                file:
+                  type: string
+                  format: binary
+              required:
+              - data
+              - file
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                required:
+                - message
+  /key-stores/{storeId}/onchain-sign/output:
+    post:
+      operationId: submitOnchainSignOutput
+      summary: Submit Onchain Sign Output
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Submits the output archive produced by the offline signer fleet for an onchain-sign operation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Keys:Sign`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    fileChecksum:
+                      type: string
+                      pattern: ^[a-f0-9]{64}$
+                    outputJson:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - keystore-output
+                        version:
+                          type: number
+                          enum:
+                          - 1
+                        org_id:
+                          type: string
+                          minLength: 1
+                        fleet_id:
+                          type: string
+                          minLength: 1
+                        keystore_id:
+                          type: string
+                          minLength: 1
+                        group_id:
+                          type: string
+                          minLength: 1
+                        status:
+                          type: string
+                          enum:
+                          - success
+                          - partial
+                          - fail
+                        outputs:
+                          type: object
+                          additionalProperties:
+                            oneOf:
+                            - type: object
+                              properties:
+                                type:
+                                  type: string
+                                  enum:
+                                  - proof-of-control-v1
+                                result:
+                                  anyOf:
+                                  - type: object
+                                    properties:
+                                      success:
+                                        type: object
+                                        properties:
+                                          signer_public_key:
+                                            type: string
+                                            pattern: ^[a-f0-9]+$
+                                          prefix:
+                                            type: string
+                                            pattern: ^[a-f0-9]+$
+                                          message:
+                                            type: string
+                                            minLength: 1
+                                          exact_bytes_signed:
+                                            type: string
+                                            pattern: ^[a-f0-9]{64}$
+                                          signature:
+                                            type: string
+                                            pattern: ^[a-f0-9]+$
+                                        required:
+                                        - signer_public_key
+                                        - prefix
+                                        - message
+                                        - exact_bytes_signed
+                                        - signature
+                                    required:
+                                    - success
+                                    additionalProperties: false
+                                  - type: object
+                                    properties:
+                                      fail:
+                                        type: object
+                                        properties:
+                                          message:
+                                            type: string
+                                            minLength: 1
+                                          code:
+                                            type: string
+                                            minLength: 1
+                                        required:
+                                        - message
+                                        - code
+                                    required:
+                                    - fail
+                                    additionalProperties: false
+                              required:
+                              - type
+                              - result
+                              title: Proof of Control Output
+                            - type: object
+                              properties:
+                                type:
+                                  type: string
+                                  enum:
+                                  - onchain-sign-v1
+                                result:
+                                  anyOf:
+                                  - type: object
+                                    properties:
+                                      success:
+                                        type: object
+                                        additionalProperties:
+                                          type: object
+                                          properties:
+                                            signer_public_key:
+                                              type: string
+                                              pattern: ^[a-f0-9]+$
+                                            exact_bytes_signed:
+                                              type: string
+                                              pattern: ^[a-f0-9]+$
+                                            signature:
+                                              type: string
+                                              pattern: ^[a-f0-9]+$
+                                          required:
+                                          - signer_public_key
+                                          - exact_bytes_signed
+                                          - signature
+                                    required:
+                                    - success
+                                    additionalProperties: false
+                                  - type: object
+                                    properties:
+                                      fail:
+                                        type: object
+                                        properties:
+                                          message:
+                                            type: string
+                                            minLength: 1
+                                          code:
+                                            type: string
+                                            minLength: 1
+                                        required:
+                                        - message
+                                        - code
+                                    required:
+                                    - fail
+                                    additionalProperties: false
+                              required:
+                              - type
+                              - result
+                              title: Onchain Sign Output
+                      required:
+                      - type
+                      - version
+                      - org_id
+                      - fleet_id
+                      - keystore_id
+                      - group_id
+                      - status
+                      - outputs
+                  required:
+                  - fileChecksum
+                  - outputJson
+                file:
+                  type: string
+                  format: binary
+              required:
+              - data
+              - file
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - success
+                    - partial
+                required:
+                - status
+  /key-stores/{storeId}/proof-of-control/output:
+    post:
+      operationId: submitProofOfControlOutput
+      summary: Submit Proof Of Control Output
+      tags:
+      - Signers
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Submits the output archive produced by the offline signer fleet for a proof-of-control operation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`KeyStores:Instructions:Keys:ProveControl`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: storeId
+        in: path
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: object
+                  properties:
+                    fileChecksum:
+                      type: string
+                      pattern: ^[a-f0-9]{64}$
+                    outputJson:
+                      type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - keystore-output
+                        version:
+                          type: number
+                          enum:
+                          - 1
+                        org_id:
+                          type: string
+                          minLength: 1
+                        fleet_id:
+                          type: string
+                          minLength: 1
+                        keystore_id:
+                          type: string
+                          minLength: 1
+                        group_id:
+                          type: string
+                          minLength: 1
+                        status:
+                          type: string
+                          enum:
+                          - success
+                          - partial
+                          - fail
+                        outputs:
+                          type: object
+                          additionalProperties:
+                            oneOf:
+                            - type: object
+                              properties:
+                                type:
+                                  type: string
+                                  enum:
+                                  - proof-of-control-v1
+                                result:
+                                  anyOf:
+                                  - type: object
+                                    properties:
+                                      success:
+                                        type: object
+                                        properties:
+                                          signer_public_key:
+                                            type: string
+                                            pattern: ^[a-f0-9]+$
+                                          prefix:
+                                            type: string
+                                            pattern: ^[a-f0-9]+$
+                                          message:
+                                            type: string
+                                            minLength: 1
+                                          exact_bytes_signed:
+                                            type: string
+                                            pattern: ^[a-f0-9]{64}$
+                                          signature:
+                                            type: string
+                                            pattern: ^[a-f0-9]+$
+                                        required:
+                                        - signer_public_key
+                                        - prefix
+                                        - message
+                                        - exact_bytes_signed
+                                        - signature
+                                    required:
+                                    - success
+                                    additionalProperties: false
+                                  - type: object
+                                    properties:
+                                      fail:
+                                        type: object
+                                        properties:
+                                          message:
+                                            type: string
+                                            minLength: 1
+                                          code:
+                                            type: string
+                                            minLength: 1
+                                        required:
+                                        - message
+                                        - code
+                                    required:
+                                    - fail
+                                    additionalProperties: false
+                              required:
+                              - type
+                              - result
+                              title: Proof of Control Output
+                            - type: object
+                              properties:
+                                type:
+                                  type: string
+                                  enum:
+                                  - onchain-sign-v1
+                                result:
+                                  anyOf:
+                                  - type: object
+                                    properties:
+                                      success:
+                                        type: object
+                                        additionalProperties:
+                                          type: object
+                                          properties:
+                                            signer_public_key:
+                                              type: string
+                                              pattern: ^[a-f0-9]+$
+                                            exact_bytes_signed:
+                                              type: string
+                                              pattern: ^[a-f0-9]+$
+                                            signature:
+                                              type: string
+                                              pattern: ^[a-f0-9]+$
+                                          required:
+                                          - signer_public_key
+                                          - exact_bytes_signed
+                                          - signature
+                                    required:
+                                    - success
+                                    additionalProperties: false
+                                  - type: object
+                                    properties:
+                                      fail:
+                                        type: object
+                                        properties:
+                                          message:
+                                            type: string
+                                            minLength: 1
+                                          code:
+                                            type: string
+                                            minLength: 1
+                                        required:
+                                        - message
+                                        - code
+                                    required:
+                                    - fail
+                                    additionalProperties: false
+                              required:
+                              - type
+                              - result
+                              title: Onchain Sign Output
+                      required:
+                      - type
+                      - version
+                      - org_id
+                      - fleet_id
+                      - keystore_id
+                      - group_id
+                      - status
+                      - outputs
+                  required:
+                  - fileChecksum
+                  - outputJson
+                file:
+                  type: string
+                  format: binary
+              required:
+              - data
+              - file
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    enum:
+                    - success
+                    - partial
+                required:
+                - status
+components:
+  securitySchemes:
+    authenticationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

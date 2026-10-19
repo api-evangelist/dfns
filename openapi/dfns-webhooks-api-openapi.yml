@@ -1,67 +1,139 @@
 openapi: 3.2.0
 info:
+  version: 2.0.249
   title: Dfns Webhooks API
-  description: Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API.
-  contact:
-    name: Dfns Support
-    url: https://www.dfns.co/
-  termsOfService: https://www.dfns.co/terms-of-service
-  version: '1.0'
 servers:
 - url: https://api.dfns.io
-  description: Dfns production REST API (Europe / default)
+  description: Default - Europe
 - url: https://api.uae.dfns.io
-  description: Dfns production REST API (UAE region)
-security:
-- BearerAuth: []
-  AppId: []
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
 tags:
 - name: Webhooks
-  description: Event webhooks and delivery logs.
 paths:
   /webhooks:
     post:
       operationId: createWebhook
+      summary: Create Webhook
       tags:
       - Webhooks
-      summary: Create a webhook
       security:
-      - BearerAuth: []
-        AppId: []
-        UserAction: []
+      - authenticationToken: []
+        userActionSignature: []
+      description: Register a new webhook.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Webhooks:Create`: Always required."
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-              - url
-              - events
               properties:
                 url:
                   type: string
+                  description: Webhook url
+                status:
+                  type: string
+                  enum:
+                  - Enabled
+                  - Disabled
+                  description: Webhook status
+                description:
+                  type: string
+                  maxLength: 256
                 events:
                   type: array
                   items:
-                    type: string
-                description:
-                  type: string
+                    anyOf:
+                    - type: string
+                      enum:
+                      - policy.triggered
+                      - policy.approval.pending
+                      - policy.approval.resolved
+                      - key.created
+                      - key.deleted
+                      - key.delegated
+                      - key.exported
+                      - wallet.blockchainevent.detected
+                      - wallet.blockchain_event.transfer.included
+                      - wallet.blockchain_event.misc.confirmed
+                      - wallet.created
+                      - wallet.activated
+                      - wallet.delegated
+                      - wallet.exported
+                      - wallet.signature.failed
+                      - wallet.signature.rejected
+                      - wallet.signature.requested
+                      - wallet.signature.signed
+                      - wallet.transaction.broadcasted
+                      - wallet.transaction.confirmed
+                      - wallet.transaction.failed
+                      - wallet.transaction.rejected
+                      - wallet.transaction.requested
+                      - wallet.transfer.broadcasted
+                      - wallet.transfer.confirmed
+                      - wallet.transfer.failed
+                      - wallet.transfer.rejected
+                      - wallet.transfer.requested
+                      - wallet.offer.received
+                      - wallet.offer.accepted
+                      - wallet.offer.rejected
+                      - wallet.offer.withdrawn
+                      - wallet.tags.modified
+                      - vault.created
+                      - vault.updated
+                      - vault.tags.modified
+                      - vault.event.created
+                      - address_watch.blockchain_event.transfer.confirmed
+                      - address_watch.blockchain_event.misc.confirmed
+                      - payout.action.required
+                      description: WebhookEventKind
+                    - type: string
+                      enum:
+                      - '*'
+                    description: WebhookEventKind
+                  minItems: 1
+                  description: All events this webhook is subscribed to.
+              required:
+              - url
+              - events
+              additionalProperties: false
       responses:
         '200':
-          description: The created webhook.
+          description: Success
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Webhook'
+                $ref: '#/components/schemas/WebhookWithSecret'
     get:
       operationId: listWebhooks
+      summary: List Webhooks
       tags:
       - Webhooks
-      summary: List webhooks
+      security:
+      - authenticationToken: []
+      description: List all webhooks for the authenticated user's organization. The results are paginated.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Webhooks:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 200
+        required: false
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+        required: false
+        name: paginationToken
+        in: query
       responses:
         '200':
-          description: A list of webhooks.
+          description: Success
           content:
             application/json:
               schema:
@@ -71,143 +143,1585 @@ paths:
                     type: array
                     items:
                       $ref: '#/components/schemas/Webhook'
+                  nextPageToken:
+                    type: string
+                required:
+                - items
+                additionalProperties: false
   /webhooks/{webhookId}:
-    get:
-      operationId: getWebhook
+    delete:
+      operationId: deleteWebhook
+      summary: Delete Webhook
       tags:
       - Webhooks
-      summary: Get a webhook by id
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Deletes an existing webhook registration.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Webhooks:Delete`: Always required."
       parameters:
-      - in: path
-        name: webhookId
-        required: true
-        schema:
+      - schema:
           type: string
+          minLength: 1
+        required: true
+        name: webhookId
+        in: path
       responses:
         '200':
-          description: The webhook.
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    enum:
+                    - true
+                required:
+                - deleted
+    get:
+      operationId: getWebhook
+      summary: Get Webhook
+      tags:
+      - Webhooks
+      security:
+      - authenticationToken: []
+      description: Retrieve information about a specific webhook.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Webhooks:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+        required: true
+        name: webhookId
+        in: path
+      responses:
+        '200':
+          description: Success
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Webhook'
     put:
       operationId: updateWebhook
+      summary: Update Webhook
       tags:
       - Webhooks
-      summary: Update a webhook
       security:
-      - BearerAuth: []
-        AppId: []
-        UserAction: []
+      - authenticationToken: []
+        userActionSignature: []
+      description: Update the definition of an existing webhook.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Webhooks:Update`: Always required."
       parameters:
-      - in: path
-        name: webhookId
-        required: true
-        schema:
+      - schema:
           type: string
+          minLength: 1
+        required: true
+        name: webhookId
+        in: path
       requestBody:
         required: true
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Webhook'
+              type: object
+              properties:
+                url:
+                  type: string
+                  description: Webhook url
+                description:
+                  type: string
+                  maxLength: 256
+                events:
+                  type: array
+                  items:
+                    anyOf:
+                    - type: string
+                      enum:
+                      - policy.triggered
+                      - policy.approval.pending
+                      - policy.approval.resolved
+                      - key.created
+                      - key.deleted
+                      - key.delegated
+                      - key.exported
+                      - wallet.blockchainevent.detected
+                      - wallet.blockchain_event.transfer.included
+                      - wallet.blockchain_event.misc.confirmed
+                      - wallet.created
+                      - wallet.activated
+                      - wallet.delegated
+                      - wallet.exported
+                      - wallet.signature.failed
+                      - wallet.signature.rejected
+                      - wallet.signature.requested
+                      - wallet.signature.signed
+                      - wallet.transaction.broadcasted
+                      - wallet.transaction.confirmed
+                      - wallet.transaction.failed
+                      - wallet.transaction.rejected
+                      - wallet.transaction.requested
+                      - wallet.transfer.broadcasted
+                      - wallet.transfer.confirmed
+                      - wallet.transfer.failed
+                      - wallet.transfer.rejected
+                      - wallet.transfer.requested
+                      - wallet.offer.received
+                      - wallet.offer.accepted
+                      - wallet.offer.rejected
+                      - wallet.offer.withdrawn
+                      - wallet.tags.modified
+                      - vault.created
+                      - vault.updated
+                      - vault.tags.modified
+                      - vault.event.created
+                      - address_watch.blockchain_event.transfer.confirmed
+                      - address_watch.blockchain_event.misc.confirmed
+                      - payout.action.required
+                      description: WebhookEventKind
+                    - type: string
+                      enum:
+                      - '*'
+                    description: WebhookEventKind
+                  minItems: 1
+                  description: All events this webhook is subscribed to.
+                status:
+                  type: string
+                  enum:
+                  - Enabled
+                  - Disabled
+                  description: Webhook status
+              additionalProperties: false
       responses:
         '200':
-          description: The updated webhook.
+          description: Success
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Webhook'
-    delete:
-      operationId: deleteWebhook
-      tags:
-      - Webhooks
-      summary: Delete a webhook
-      security:
-      - BearerAuth: []
-        AppId: []
-        UserAction: []
-      parameters:
-      - in: path
-        name: webhookId
-        required: true
-        schema:
-          type: string
-      responses:
-        '200':
-          description: The webhook was deleted.
   /webhooks/{webhookId}/ping:
     post:
       operationId: pingWebhook
+      summary: Ping Webhook
       tags:
       - Webhooks
-      summary: Ping a webhook
-      description: Sends a test event to the webhook to verify connectivity.
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: This endpoint is meant for webhook setup and troubleshooting. Calling the endpoint will trigger a fake test event that will be pushed to the webhook URL. The fake event will not be saved and not appear in further requests to Webhook Events.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Webhooks:Ping`: Always required."
       parameters:
-      - in: path
-        name: webhookId
-        required: true
-        schema:
+      - schema:
           type: string
+          minLength: 1
+        required: true
+        name: webhookId
+        in: path
       responses:
         '200':
-          description: The ping result (delivered status and response code).
+          description: Success
           content:
             application/json:
               schema:
                 type: object
+                properties:
+                  status:
+                    type: string
+                  error:
+                    type: string
+                required:
+                - status
+                additionalProperties: false
+  /webhooks/{webhookId}/events/{webhookEventId}:
+    get:
+      operationId: getWebhookEvent
+      summary: Get Webhook Event
+      tags:
+      - Webhooks
+      security:
+      - authenticationToken: []
+      description: 'Retrieve a specific webhook event details by its ID.
+
+
+        We only keep a trace of those Webhook Events in our system for a **retention period of 31 days**. Past that, they are discarded, so you cannot see them using List Webhook Events or Get Webhook Event endpoints.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Webhooks:Events:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^wh-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: webhookId
+        in: path
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^whe-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: webhookEventId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WebhookEvent'
   /webhooks/{webhookId}/events:
     get:
       operationId: listWebhookEvents
+      summary: List Webhook Events
       tags:
       - Webhooks
-      summary: List webhook events
+      security:
+      - authenticationToken: []
+      description: 'Lists all events for a given webhook.
+
+
+        We only keep a trace of those Webhook Events in our system for a **retention period of 31 days**. Past that, they are discarded, so you cannot see them using List Webhook Events or Get Webhook Event endpoints.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Webhooks:Events:Read`: Always required."
       parameters:
-      - in: path
-        name: webhookId
-        required: true
-        schema:
+      - schema:
           type: string
+          minLength: 1
+        required: true
+        name: webhookId
+        in: path
+      - schema:
+          type: string
+          enum:
+          - policy.triggered
+          - policy.approval.pending
+          - policy.approval.resolved
+          - key.created
+          - key.deleted
+          - key.delegated
+          - key.exported
+          - wallet.blockchainevent.detected
+          - wallet.blockchain_event.transfer.included
+          - wallet.blockchain_event.misc.confirmed
+          - wallet.created
+          - wallet.activated
+          - wallet.delegated
+          - wallet.exported
+          - wallet.signature.failed
+          - wallet.signature.rejected
+          - wallet.signature.requested
+          - wallet.signature.signed
+          - wallet.transaction.broadcasted
+          - wallet.transaction.confirmed
+          - wallet.transaction.failed
+          - wallet.transaction.rejected
+          - wallet.transaction.requested
+          - wallet.transfer.broadcasted
+          - wallet.transfer.confirmed
+          - wallet.transfer.failed
+          - wallet.transfer.rejected
+          - wallet.transfer.requested
+          - wallet.offer.received
+          - wallet.offer.accepted
+          - wallet.offer.rejected
+          - wallet.offer.withdrawn
+          - wallet.tags.modified
+          - vault.created
+          - vault.updated
+          - vault.tags.modified
+          - vault.event.created
+          - address_watch.blockchain_event.transfer.confirmed
+          - address_watch.blockchain_event.misc.confirmed
+          - payout.action.required
+        required: false
+        name: kind
+        in: query
+      - schema:
+          type: string
+          enum:
+          - 'true'
+          - 'false'
+        required: false
+        name: deliveryFailed
+        in: query
+      - schema:
+          type: integer
+          exclusiveMinimum: 0
+          maximum: 200
+        required: false
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+        required: false
+        name: paginationToken
+        in: query
       responses:
         '200':
-          description: The delivery log of events for the webhook.
+          description: Success
           content:
             application/json:
               schema:
                 type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WebhookEvent'
+                  nextPageToken:
+                    type: string
+                required:
+                - items
+webhooks:
+  webhook.event.retry.triggered:
+    post:
+      summary: Webhook Event Retry Triggered
+      description: Inbound event DFNS sends to your endpoint when it automatically retries a failed webhook delivery. This is a webhook event you receive, not an API method you can call. See Webhook Event Deliveries & Retries for details.
+      tags:
+      - Webhooks
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/WebhookEnvelopeBase'
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                    - webhook.event.retry.triggered
+                  data:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        description: ID of this webhook retry event.
+                      webhookId:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                        pattern: ^wh-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                        description: ID of the webhook to which this event is delivered.
+                        example: wh-705m3-si5pq-k3kkp3vv9fnehdil
+                      retryOf:
+                        type: string
+                        minLength: 1
+                        maxLength: 64
+                        pattern: ^whe-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                        description: ID of the webhook event whose delivery failed and is retried.
+                        example: whe-544ul-uqgad-jkgltj5p6fvd04cj
+                      deliveryAttempt:
+                        type: number
+                        description: Attempt number of this delivery attempt.
+                      originalEvent:
+                        allOf:
+                        - $ref: '#/components/schemas/WebhookEvent'
+                        - description: The original Dfns event.
+                    required:
+                    - id
+                    - webhookId
+                    - retryOf
+                    - deliveryAttempt
+                    - originalEvent
+                required:
+                - kind
+                - data
+      responses:
+        '200':
+          description: Respond with a 200 to indicate that the event was successfully received. If your endpoint returns anything else than a 200 status code, we will consider the delivery has failed and retry later. See details [here](https://docs.dfns.co/api-reference/webhook-events#webhook-event-deliveries-%26-retries).
 components:
   schemas:
-    Webhook:
+    WebhookWithSecret:
       type: object
       properties:
         id:
           type: string
+          description: Webhook ID
         url:
           type: string
+          description: Webhook url
+        events:
+          type: array
+          items:
+            anyOf:
+            - type: string
+              enum:
+              - policy.triggered
+              - policy.approval.pending
+              - policy.approval.resolved
+              - key.created
+              - key.deleted
+              - key.delegated
+              - key.exported
+              - wallet.blockchainevent.detected
+              - wallet.blockchain_event.transfer.included
+              - wallet.blockchain_event.misc.confirmed
+              - wallet.created
+              - wallet.activated
+              - wallet.delegated
+              - wallet.exported
+              - wallet.signature.failed
+              - wallet.signature.rejected
+              - wallet.signature.requested
+              - wallet.signature.signed
+              - wallet.transaction.broadcasted
+              - wallet.transaction.confirmed
+              - wallet.transaction.failed
+              - wallet.transaction.rejected
+              - wallet.transaction.requested
+              - wallet.transfer.broadcasted
+              - wallet.transfer.confirmed
+              - wallet.transfer.failed
+              - wallet.transfer.rejected
+              - wallet.transfer.requested
+              - wallet.offer.received
+              - wallet.offer.accepted
+              - wallet.offer.rejected
+              - wallet.offer.withdrawn
+              - wallet.tags.modified
+              - vault.created
+              - vault.updated
+              - vault.tags.modified
+              - vault.event.created
+              - address_watch.blockchain_event.transfer.confirmed
+              - address_watch.blockchain_event.misc.confirmed
+              - payout.action.required
+              description: WebhookEventKind
+            - type: string
+              enum:
+              - '*'
+            description: WebhookEventKind
+          description: All events this webhook is subscribed to.
         status:
           type: string
           enum:
           - Enabled
           - Disabled
+          description: Webhook status
+        description:
+          type: string
+          description: Short description this webhook's purpose
+        dateCreated:
+          type: string
+          description: Date when webhook was created
+        dateUpdated:
+          type: string
+          description: Date when webhook was last updated
+        secret:
+          type: string
+          description: The secret associated with this webhook, with which webhook requests will be signed.
+      required:
+      - id
+      - url
+      - events
+      - status
+      - dateCreated
+      - dateUpdated
+      - secret
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+          description: Webhook ID
+        url:
+          type: string
+          description: Webhook url
         events:
           type: array
           items:
-            type: string
+            anyOf:
+            - type: string
+              enum:
+              - policy.triggered
+              - policy.approval.pending
+              - policy.approval.resolved
+              - key.created
+              - key.deleted
+              - key.delegated
+              - key.exported
+              - wallet.blockchainevent.detected
+              - wallet.blockchain_event.transfer.included
+              - wallet.blockchain_event.misc.confirmed
+              - wallet.created
+              - wallet.activated
+              - wallet.delegated
+              - wallet.exported
+              - wallet.signature.failed
+              - wallet.signature.rejected
+              - wallet.signature.requested
+              - wallet.signature.signed
+              - wallet.transaction.broadcasted
+              - wallet.transaction.confirmed
+              - wallet.transaction.failed
+              - wallet.transaction.rejected
+              - wallet.transaction.requested
+              - wallet.transfer.broadcasted
+              - wallet.transfer.confirmed
+              - wallet.transfer.failed
+              - wallet.transfer.rejected
+              - wallet.transfer.requested
+              - wallet.offer.received
+              - wallet.offer.accepted
+              - wallet.offer.rejected
+              - wallet.offer.withdrawn
+              - wallet.tags.modified
+              - vault.created
+              - vault.updated
+              - vault.tags.modified
+              - vault.event.created
+              - address_watch.blockchain_event.transfer.confirmed
+              - address_watch.blockchain_event.misc.confirmed
+              - payout.action.required
+              description: WebhookEventKind
+            - type: string
+              enum:
+              - '*'
+            description: WebhookEventKind
+          description: All events this webhook is subscribed to.
+        status:
+          type: string
+          enum:
+          - Enabled
+          - Disabled
+          description: Webhook status
         description:
           type: string
+          description: Short description this webhook's purpose
+        dateCreated:
+          type: string
+          description: Date when webhook was created
+        dateUpdated:
+          type: string
+          description: Date when webhook was last updated
+      required:
+      - id
+      - url
+      - events
+      - status
+      - dateCreated
+      - dateUpdated
+    WebhookEvent:
+      type: object
+      properties:
+        id:
+          type: string
+          description: WebhookEvent ID
+        date:
+          type: string
+          description: ISO date string when event was raised
+        kind:
+          type: string
+          enum:
+          - policy.triggered
+          - policy.approval.pending
+          - policy.approval.resolved
+          - key.created
+          - key.deleted
+          - key.delegated
+          - key.exported
+          - wallet.blockchainevent.detected
+          - wallet.blockchain_event.transfer.included
+          - wallet.blockchain_event.misc.confirmed
+          - wallet.created
+          - wallet.activated
+          - wallet.delegated
+          - wallet.exported
+          - wallet.signature.failed
+          - wallet.signature.rejected
+          - wallet.signature.requested
+          - wallet.signature.signed
+          - wallet.transaction.broadcasted
+          - wallet.transaction.confirmed
+          - wallet.transaction.failed
+          - wallet.transaction.rejected
+          - wallet.transaction.requested
+          - wallet.transfer.broadcasted
+          - wallet.transfer.confirmed
+          - wallet.transfer.failed
+          - wallet.transfer.rejected
+          - wallet.transfer.requested
+          - wallet.offer.received
+          - wallet.offer.accepted
+          - wallet.offer.rejected
+          - wallet.offer.withdrawn
+          - wallet.tags.modified
+          - vault.created
+          - vault.updated
+          - vault.tags.modified
+          - vault.event.created
+          - address_watch.blockchain_event.transfer.confirmed
+          - address_watch.blockchain_event.misc.confirmed
+          - payout.action.required
+          description: Webhook event
+        data:
+          type: object
+          additionalProperties: {}
+        status:
+          type: string
+          description: Status code of the webhook request
+        error:
+          type: string
+          description: Error message if any error happened during the webhook request.
+        timestampSent:
+          type: integer
+          exclusiveMinimum: 0
+          description: Unix timestamp when the event was forwarded to the webhook url by our servers.
+      required:
+      - id
+      - date
+      - kind
+      - data
+      - status
+      - timestampSent
+    WebhookEnvelopeBase:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^whe-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Unique identifier for this webhook event.
+          example: whe-544ul-uqgad-jkgltj5p6fvd04cj
+        date:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Timestamp when the event occurred.'
+          example: 2023-04-14 20:41:28.715000+00:00
+        retryOf:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^whe-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: ID of the original event if this is a retry.
+          example: whe-544ul-uqgad-jkgltj5p6fvd04cj
+        timestampSent:
+          type: integer
+          description: Unix timestamp when the event was sent
+          example: 1719566994
+        deliveryAttempt:
+          type: integer
+          minimum: 1
+          description: Delivery attempt number
+          example: 1
+      required:
+      - id
+      - date
+      - timestampSent
+      - deliveryAttempt
   securitySchemes:
-    BearerAuth:
+    authenticationToken:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
-    AppId:
-      type: apiKey
-      in: header
-      name: X-DFNS-APPID
-      description: The Dfns application (app) id the request is made on behalf of.
-    UserAction:
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
       type: apiKey
       in: header
       name: X-DFNS-USERACTION
-      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

@@ -1,0 +1,1515 @@
+openapi: 3.0.1
+info:
+  title: Dfns API
+  description: >-
+    Representative OpenAPI description of the Dfns wallet-as-a-service and MPC
+    key-management REST API. Covers programmable non-custodial wallets, MPC
+    keys, transfers and transactions, signature generation, the policy engine
+    and approvals, webhooks, permissions and authentication (including User
+    Action Signing), service accounts, and blockchain network reads.
+
+    Authentication uses an Authorization Bearer access token (from a service
+    account token or a user login) plus, for sensitive mutating operations, a
+    User Action Signature obtained via the User Action Signing challenge/complete
+    flow and passed in the X-DFNS-USERACTION header.
+  contact:
+    name: Dfns Support
+    url: https://www.dfns.co/
+  termsOfService: https://www.dfns.co/terms-of-service
+  version: '1.0'
+servers:
+  - url: https://api.dfns.io
+    description: Dfns production REST API (Europe / default)
+  - url: https://api.uae.dfns.io
+    description: Dfns production REST API (UAE region)
+tags:
+  - name: Wallets
+    description: Programmable non-custodial wallets, balances, NFTs, and history.
+  - name: Keys
+    description: Standalone MPC keys and delegated signing.
+  - name: Transfers
+    description: Asset transfers built, signed, and broadcast from a wallet.
+  - name: Transactions
+    description: Sign-and-broadcast of caller-supplied transactions from a wallet.
+  - name: Signatures
+    description: Raw signature generation from keys.
+  - name: Policies
+    description: Policy engine rules and approval decisions.
+  - name: Approvals
+    description: Approval workflow driven by the policy engine.
+  - name: Webhooks
+    description: Event webhooks and delivery logs.
+  - name: Permissions
+    description: Permissions and their assignments to identities.
+  - name: Auth
+    description: Login, User Action Signing, users, and credentials.
+  - name: ServiceAccounts
+    description: Machine identities and their access tokens.
+  - name: Networks
+    description: Network fee estimates and read-only blockchain calls.
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: >-
+        Access token issued to a service account or a logged-in user. Sent as
+        `Authorization: Bearer <token>`.
+    AppId:
+      type: apiKey
+      in: header
+      name: X-DFNS-APPID
+      description: The Dfns application (app) id the request is made on behalf of.
+    UserAction:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: >-
+        A User Action Signature token proving the caller cryptographically
+        signed the request payload. Required on sensitive mutating operations
+        (transfers, signature generation, key/policy/permission changes).
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            message:
+              type: string
+            code:
+              type: string
+    Wallet:
+      type: object
+      properties:
+        id:
+          type: string
+          example: wa-6lo9d-9uvpm-9skk4dv0v99cf6bs
+        network:
+          type: string
+          example: EthereumSepolia
+        address:
+          type: string
+          example: '0x8f3a3a...'
+        signingKey:
+          type: object
+          properties:
+            scheme:
+              type: string
+              example: ECDSA
+            curve:
+              type: string
+              example: secp256k1
+            publicKey:
+              type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+        custodial:
+          type: boolean
+        name:
+          type: string
+        tags:
+          type: array
+          items:
+            type: string
+        dateCreated:
+          type: string
+          format: date-time
+    WalletList:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Wallet'
+        nextPageToken:
+          type: string
+          nullable: true
+    WalletAsset:
+      type: object
+      properties:
+        symbol:
+          type: string
+        decimals:
+          type: integer
+        balance:
+          type: string
+        kind:
+          type: string
+          example: Native
+    SignatureRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        walletId:
+          type: string
+        status:
+          type: string
+          enum: [Pending, Executing, Signed, Confirmed, Failed, Rejected]
+        requestBody:
+          type: object
+        signature:
+          type: object
+          nullable: true
+          properties:
+            r:
+              type: string
+            s:
+              type: string
+            recid:
+              type: integer
+            encoded:
+              type: string
+        dateRequested:
+          type: string
+          format: date-time
+    TransferRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        walletId:
+          type: string
+        network:
+          type: string
+        requester:
+          type: object
+        status:
+          type: string
+          enum: [Pending, Executing, Broadcasted, Confirmed, Failed, Rejected]
+        txHash:
+          type: string
+          nullable: true
+    Key:
+      type: object
+      properties:
+        id:
+          type: string
+          example: key-2s7vg-...
+        scheme:
+          type: string
+          example: ECDSA
+        curve:
+          type: string
+          example: secp256k1
+        publicKey:
+          type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+        custodial:
+          type: boolean
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        activityKind:
+          type: string
+          example: Wallets:Sign
+        rule:
+          type: object
+        action:
+          type: object
+        status:
+          type: string
+          enum: [Active, Archived]
+    Approval:
+      type: object
+      properties:
+        id:
+          type: string
+        activityId:
+          type: string
+        status:
+          type: string
+          enum: [Pending, Approved, Denied, AutoApproved, Expired]
+        decisions:
+          type: array
+          items:
+            type: object
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+        status:
+          type: string
+          enum: [Enabled, Disabled]
+        events:
+          type: array
+          items:
+            type: string
+        description:
+          type: string
+    Permission:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        operations:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [Active, Archived]
+    ServiceAccount:
+      type: object
+      properties:
+        userInfo:
+          type: object
+          properties:
+            userId:
+              type: string
+            username:
+              type: string
+            isActive:
+              type: boolean
+            isServiceAccount:
+              type: boolean
+        accessTokens:
+          type: array
+          items:
+            type: object
+    UserActionChallenge:
+      type: object
+      properties:
+        challenge:
+          type: string
+        challengeIdentifier:
+          type: string
+        allowCredentials:
+          type: object
+    UserActionResponse:
+      type: object
+      properties:
+        userAction:
+          type: string
+          description: The User Action Signature token to pass in X-DFNS-USERACTION.
+security:
+  - BearerAuth: []
+    AppId: []
+paths:
+  /wallets:
+    post:
+      operationId: createWallet
+      tags: [Wallets]
+      summary: Create a wallet
+      description: >-
+        Creates a new non-custodial wallet on a given blockchain network,
+        backed by an MPC key. Requires a User Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [network]
+              properties:
+                network:
+                  type: string
+                  example: EthereumSepolia
+                name:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        '200':
+          description: The created wallet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+    get:
+      operationId: listWallets
+      tags: [Wallets]
+      summary: List wallets
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+        - in: query
+          name: paginationToken
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A paginated list of wallets.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WalletList'
+  /wallets/{walletId}:
+    get:
+      operationId: getWallet
+      tags: [Wallets]
+      summary: Get a wallet by id
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The wallet.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Wallet'
+  /wallets/{walletId}/assets:
+    get:
+      operationId: getWalletAssets
+      tags: [Wallets]
+      summary: Get wallet assets (balances)
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The wallet's asset balances.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  walletId:
+                    type: string
+                  network:
+                    type: string
+                  assets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WalletAsset'
+  /wallets/{walletId}/nfts:
+    get:
+      operationId: getWalletNfts
+      tags: [Wallets]
+      summary: Get wallet NFTs
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The wallet's NFTs.
+          content:
+            application/json:
+              schema:
+                type: object
+  /wallets/{walletId}/history:
+    get:
+      operationId: getWalletHistory
+      tags: [Wallets]
+      summary: Get wallet transfer history
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The wallet's on-chain history.
+          content:
+            application/json:
+              schema:
+                type: object
+  /wallets/{walletId}/transfers:
+    post:
+      operationId: transferAsset
+      tags: [Transfers]
+      summary: Transfer an asset from a wallet
+      description: >-
+        Initiates a native, ERC-20/SPL/token, or NFT transfer from a wallet.
+        Dfns builds, signs, and broadcasts the transaction. Requires a User
+        Action Signature and may be gated by the policy engine for approval.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, to]
+              properties:
+                kind:
+                  type: string
+                  enum: [Native, Erc20, Erc721, Spl, Sep20]
+                  example: Native
+                to:
+                  type: string
+                amount:
+                  type: string
+                contract:
+                  type: string
+      responses:
+        '200':
+          description: The created transfer request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferRequest'
+    get:
+      operationId: listTransfers
+      tags: [Transfers]
+      summary: List wallet transfer requests
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of transfer requests for the wallet.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransferRequest'
+                  nextPageToken:
+                    type: string
+                    nullable: true
+  /wallets/{walletId}/transfers/{transferId}:
+    get:
+      operationId: getTransfer
+      tags: [Transfers]
+      summary: Get a wallet transfer request by id
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+        - in: path
+          name: transferId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The transfer request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferRequest'
+  /wallets/{walletId}/transactions:
+    post:
+      operationId: broadcastTransaction
+      tags: [Transactions]
+      summary: Broadcast a transaction from a wallet
+      description: >-
+        Signs and broadcasts a caller-supplied transaction (e.g. a smart
+        contract call) from the wallet. Requires a User Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind]
+              properties:
+                kind:
+                  type: string
+                  enum: [Transaction, Evm, Eip1559]
+                transaction:
+                  type: string
+                  description: Hex-encoded unsigned transaction.
+      responses:
+        '200':
+          description: The created transaction broadcast request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TransferRequest'
+    get:
+      operationId: listTransactions
+      tags: [Transactions]
+      summary: List wallet transaction requests
+      parameters:
+        - in: path
+          name: walletId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: A list of transaction requests for the wallet.
+          content:
+            application/json:
+              schema:
+                type: object
+  /keys:
+    post:
+      operationId: createKey
+      tags: [Keys]
+      summary: Create a key
+      description: >-
+        Creates a standalone MPC key (scheme/curve) not bound to a single
+        network, usable to derive addresses across chains. Requires a User
+        Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scheme, curve]
+              properties:
+                scheme:
+                  type: string
+                  example: ECDSA
+                curve:
+                  type: string
+                  example: secp256k1
+                name:
+                  type: string
+      responses:
+        '200':
+          description: The created key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+    get:
+      operationId: listKeys
+      tags: [Keys]
+      summary: List keys
+      responses:
+        '200':
+          description: A list of keys.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Key'
+                  nextPageToken:
+                    type: string
+                    nullable: true
+  /keys/{keyId}:
+    get:
+      operationId: getKey
+      tags: [Keys]
+      summary: Get a key by id
+      parameters:
+        - in: path
+          name: keyId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+  /keys/{keyId}/delegate:
+    post:
+      operationId: delegateKey
+      tags: [Keys]
+      summary: Delegate a key to an end user
+      description: >-
+        Transfers control of a key (and its wallets) to an end user's
+        credentials, enabling non-custodial delegated signing. Requires a User
+        Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: keyId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userId]
+              properties:
+                userId:
+                  type: string
+      responses:
+        '200':
+          description: The delegated key.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Key'
+  /keys/{keyId}/signatures:
+    post:
+      operationId: generateKeySignature
+      tags: [Signatures]
+      summary: Generate a signature from a key
+      description: >-
+        Produces a raw signature using a standalone MPC key. Requires a User
+        Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: keyId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind]
+              properties:
+                kind:
+                  type: string
+                  enum: [Hash, Message]
+                hash:
+                  type: string
+      responses:
+        '200':
+          description: The signature request.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SignatureRequest'
+  /v2/policies:
+    post:
+      operationId: createPolicy
+      tags: [Policies]
+      summary: Create a policy
+      description: >-
+        Creates a policy in the policy engine that governs an activity kind
+        (e.g. Wallets:Sign) with a rule and an action (Block, RequestApproval,
+        NoOp). Requires a User Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Policy'
+      responses:
+        '200':
+          description: The created policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    get:
+      operationId: listPolicies
+      tags: [Policies]
+      summary: List policies
+      responses:
+        '200':
+          description: A list of policies.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Policy'
+  /v2/policies/{policyId}:
+    get:
+      operationId: getPolicy
+      tags: [Policies]
+      summary: Get a policy by id
+      parameters:
+        - in: path
+          name: policyId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    put:
+      operationId: updatePolicy
+      tags: [Policies]
+      summary: Update a policy
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: policyId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Policy'
+      responses:
+        '200':
+          description: The updated policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    delete:
+      operationId: archivePolicy
+      tags: [Policies]
+      summary: Archive (delete) a policy
+      description: Archives a policy so it no longer governs activities.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: policyId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The archived policy.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+  /v2/policy-approvals:
+    get:
+      operationId: listApprovals
+      tags: [Approvals]
+      summary: List approvals
+      responses:
+        '200':
+          description: A list of approvals awaiting or resolved by decision makers.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Approval'
+  /v2/policy-approvals/{approvalId}:
+    get:
+      operationId: getApproval
+      tags: [Approvals]
+      summary: Get an approval by id
+      parameters:
+        - in: path
+          name: approvalId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The approval.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+  /v2/policy-approvals/{approvalId}/decisions:
+    post:
+      operationId: createApprovalDecision
+      tags: [Approvals]
+      summary: Create an approval decision (approve or deny)
+      description: >-
+        Records an Approved or Denied decision on a pending approval. Requires
+        a User Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: approvalId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value:
+                  type: string
+                  enum: [Approved, Denied]
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: The updated approval.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Approval'
+  /webhooks:
+    post:
+      operationId: createWebhook
+      tags: [Webhooks]
+      summary: Create a webhook
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url, events]
+              properties:
+                url:
+                  type: string
+                events:
+                  type: array
+                  items:
+                    type: string
+                description:
+                  type: string
+      responses:
+        '200':
+          description: The created webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    get:
+      operationId: listWebhooks
+      tags: [Webhooks]
+      summary: List webhooks
+      responses:
+        '200':
+          description: A list of webhooks.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Webhook'
+  /webhooks/{webhookId}:
+    get:
+      operationId: getWebhook
+      tags: [Webhooks]
+      summary: Get a webhook by id
+      parameters:
+        - in: path
+          name: webhookId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    put:
+      operationId: updateWebhook
+      tags: [Webhooks]
+      summary: Update a webhook
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: webhookId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook'
+      responses:
+        '200':
+          description: The updated webhook.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    delete:
+      operationId: deleteWebhook
+      tags: [Webhooks]
+      summary: Delete a webhook
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: webhookId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The webhook was deleted.
+  /webhooks/{webhookId}/ping:
+    post:
+      operationId: pingWebhook
+      tags: [Webhooks]
+      summary: Ping a webhook
+      description: Sends a test event to the webhook to verify connectivity.
+      parameters:
+        - in: path
+          name: webhookId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The ping result (delivered status and response code).
+          content:
+            application/json:
+              schema:
+                type: object
+  /webhooks/{webhookId}/events:
+    get:
+      operationId: listWebhookEvents
+      tags: [Webhooks]
+      summary: List webhook events
+      parameters:
+        - in: path
+          name: webhookId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The delivery log of events for the webhook.
+          content:
+            application/json:
+              schema:
+                type: object
+  /permissions:
+    post:
+      operationId: createPermission
+      tags: [Permissions]
+      summary: Create a permission
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Permission'
+      responses:
+        '200':
+          description: The created permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+    get:
+      operationId: listPermissions
+      tags: [Permissions]
+      summary: List permissions
+      responses:
+        '200':
+          description: A list of permissions.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Permission'
+  /permissions/{permissionId}:
+    get:
+      operationId: getPermission
+      tags: [Permissions]
+      summary: Get a permission by id
+      parameters:
+        - in: path
+          name: permissionId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The permission.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Permission'
+  /permissions/{permissionId}/assignments:
+    post:
+      operationId: createPermissionAssignment
+      tags: [Permissions]
+      summary: Assign a permission to an identity
+      description: Assigns a permission to a user, service account, or PAT.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: permissionId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [identityId]
+              properties:
+                identityId:
+                  type: string
+      responses:
+        '200':
+          description: The created assignment.
+          content:
+            application/json:
+              schema:
+                type: object
+  /auth/action/init:
+    post:
+      operationId: createUserActionChallenge
+      tags: [Auth]
+      summary: Initialize a User Action Signing challenge
+      description: >-
+        Starts the User Action Signing flow for a sensitive operation,
+        returning a challenge the client must sign with its credential.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [userActionPayload, userActionHttpMethod, userActionHttpPath]
+              properties:
+                userActionPayload:
+                  type: string
+                userActionHttpMethod:
+                  type: string
+                userActionHttpPath:
+                  type: string
+      responses:
+        '200':
+          description: The user action challenge.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActionChallenge'
+  /auth/action:
+    post:
+      operationId: completeUserAction
+      tags: [Auth]
+      summary: Complete a User Action Signing challenge
+      description: >-
+        Submits the signed challenge and returns a User Action Signature token
+        to pass in the X-DFNS-USERACTION header of the sensitive request.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challengeIdentifier, firstFactor]
+              properties:
+                challengeIdentifier:
+                  type: string
+                firstFactor:
+                  type: object
+      responses:
+        '200':
+          description: The user action signature.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserActionResponse'
+  /auth/login:
+    post:
+      operationId: login
+      tags: [Auth]
+      summary: Complete a user login
+      description: Exchanges signed login credentials for an access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                challengeIdentifier:
+                  type: string
+                firstFactor:
+                  type: object
+      responses:
+        '200':
+          description: The login result including an access token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /auth/login/delegated:
+    post:
+      operationId: delegatedLogin
+      tags: [Auth]
+      summary: Delegated login
+      description: >-
+        Allows a service account to obtain a scoped access token on behalf of
+        an end user for delegated (end-user-controlled) signing flows. Requires
+        a User Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [username]
+              properties:
+                username:
+                  type: string
+      responses:
+        '200':
+          description: The delegated access token.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+  /auth/users:
+    get:
+      operationId: listUsers
+      tags: [Auth]
+      summary: List users
+      responses:
+        '200':
+          description: A list of users in the organization.
+          content:
+            application/json:
+              schema:
+                type: object
+    post:
+      operationId: createUser
+      tags: [Auth]
+      summary: Create a user
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email:
+                  type: string
+                kind:
+                  type: string
+                  enum: [CustomerEmployee, EndUser]
+      responses:
+        '200':
+          description: The created user.
+          content:
+            application/json:
+              schema:
+                type: object
+  /auth/service-accounts:
+    post:
+      operationId: createServiceAccount
+      tags: [ServiceAccounts]
+      summary: Create a service account
+      description: >-
+        Creates a machine identity (service account) with an access token used
+        for server-to-server API access. Requires a User Action Signature.
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, publicKey]
+              properties:
+                name:
+                  type: string
+                publicKey:
+                  type: string
+                permissionId:
+                  type: string
+      responses:
+        '200':
+          description: The created service account and its access token.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccount'
+    get:
+      operationId: listServiceAccounts
+      tags: [ServiceAccounts]
+      summary: List service accounts
+      responses:
+        '200':
+          description: A list of service accounts.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ServiceAccount'
+  /auth/service-accounts/{serviceAccountId}:
+    get:
+      operationId: getServiceAccount
+      tags: [ServiceAccounts]
+      summary: Get a service account by id
+      parameters:
+        - in: path
+          name: serviceAccountId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The service account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccount'
+    put:
+      operationId: updateServiceAccount
+      tags: [ServiceAccounts]
+      summary: Update a service account
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: serviceAccountId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200':
+          description: The updated service account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccount'
+  /auth/service-accounts/{serviceAccountId}/activate:
+    put:
+      operationId: activateServiceAccount
+      tags: [ServiceAccounts]
+      summary: Activate a service account
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: serviceAccountId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The activated service account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccount'
+  /auth/service-accounts/{serviceAccountId}/deactivate:
+    put:
+      operationId: deactivateServiceAccount
+      tags: [ServiceAccounts]
+      summary: Deactivate a service account
+      security:
+        - BearerAuth: []
+          AppId: []
+          UserAction: []
+      parameters:
+        - in: path
+          name: serviceAccountId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The deactivated service account.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ServiceAccount'
+  /networks/fees:
+    get:
+      operationId: getNetworkFees
+      tags: [Networks]
+      summary: Estimate network fees
+      description: >-
+        Returns a current fee estimate (e.g. EIP-1559 maxFeePerGas /
+        maxPriorityFeePerGas) for a given blockchain network.
+      parameters:
+        - in: query
+          name: network
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: The fee estimate for the network.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  network:
+                    type: string
+                  kind:
+                    type: string
+                  estimatedFees:
+                    type: object
+  /networks/{network}/call-function:
+    post:
+      operationId: callFunction
+      tags: [Networks]
+      summary: Read from a smart contract (call function)
+      description: >-
+        Performs a read-only (eth_call style) function call against a contract
+        on a network without creating a transaction.
+      parameters:
+        - in: path
+          name: network
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, contract, data]
+              properties:
+                kind:
+                  type: string
+                  example: Evm
+                contract:
+                  type: string
+                data:
+                  type: string
+      responses:
+        '200':
+          description: The decoded/raw contract read result.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                  data:
+                    type: string

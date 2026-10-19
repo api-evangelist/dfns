@@ -1,0 +1,3645 @@
+openapi: 3.2.0
+info:
+  version: 2.0.249
+  title: Dfns Payouts API
+servers:
+- url: https://api.dfns.io
+  description: Default - Europe
+- url: https://api.uae.dfns.io
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
+tags:
+- name: Payouts
+paths:
+  /payouts:
+    post:
+      operationId: createPayout
+      summary: Create Payout
+      tags:
+      - Payouts
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Create a new payout to convert crypto assets to fiat currency.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payouts:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet ID to remit funds from.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  externalId:
+                    type: string
+                    description: Optional idempotency key to ensure only one payout is created.
+                  asset:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address.
+                      required:
+                      - kind
+                      - amount
+                      - contract
+                      title: ERC-20 Asset
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        mint:
+                          type: string
+                          description: The token mint address.
+                      required:
+                      - kind
+                      - amount
+                      - mint
+                      title: SPL/SPL-2022 Asset
+                    description: The asset to be paid out.
+                  fiatCurrency:
+                    type: string
+                    pattern: ^[A-Z]{3}$
+                    description: ISO-4217 fiat currency code for the payout.
+                  provider:
+                    type: string
+                    enum:
+                    - Borderless
+                  country:
+                    type: string
+                    pattern: ^[A-Z]{2}$
+                    description: ISO-3166 Alpha-2 country code for the payout destination.
+                  borderlessAccountId:
+                    type: string
+                    description: Borderless account ID specifying who is paying out funds.
+                  paymentInstructionsId:
+                    type: string
+                    description: Borderless payment instructions ID specifying fiat settlement instructions.
+                  paymentPurpose:
+                    type: string
+                    enum:
+                    - salary payment
+                    - personal remittance
+                    - rent payment
+                    - property purchase
+                    - owned account abroad
+                    - advertising expenses
+                    - advisory fees
+                    - business insurance
+                    - construction
+                    - delivery fees
+                    - education
+                    - exports
+                    - donation
+                    - hotel
+                    - loan payment
+                    - maintenance expenses
+                    - medical expense
+                    - office expenses
+                    - royalty fees
+                    - service charge
+                    - shares investment
+                    - tax payment
+                    - transportation fees
+                    - travel
+                    - utility bills
+                    - other
+                    description: Borderless reason/purpose for the payment.
+                required:
+                - walletId
+                - asset
+                - fiatCurrency
+                - provider
+                - country
+                - borderlessAccountId
+                - paymentInstructionsId
+                - paymentPurpose
+                title: Borderless Create Payout
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet ID to remit funds from.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  externalId:
+                    type: string
+                    description: Optional idempotency key to ensure only one payout is created.
+                  asset:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address.
+                      required:
+                      - kind
+                      - amount
+                      - contract
+                      title: ERC-20 Asset
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        mint:
+                          type: string
+                          description: The token mint address.
+                      required:
+                      - kind
+                      - amount
+                      - mint
+                      title: SPL/SPL-2022 Asset
+                    description: The asset to be paid out.
+                  fiatCurrency:
+                    type: string
+                    pattern: ^[A-Z]{3}$
+                    description: ISO-4217 fiat currency code for the payout.
+                  provider:
+                    type: string
+                    enum:
+                    - CircleMint
+                  destination:
+                    oneOf:
+                    - type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - bank
+                        bankId:
+                          type: string
+                          description: The Circle Mint bank account id to pay out to (the org links banks on Circle's website).
+                        rail:
+                          type: string
+                          enum:
+                          - wire
+                          - sepa
+                          - sepa_instant
+                          description: The Circle Mint payout rail.
+                      required:
+                      - type
+                      - bankId
+                      - rail
+                      title: Circle Mint Bank Destination
+                    - type: object
+                      properties:
+                        type:
+                          type: string
+                          enum:
+                          - balance
+                      required:
+                      - type
+                      title: Circle Mint Balance Destination
+                    description: 'Where the redeemed fiat goes: ''bank'' wires it to a linked bank account; ''balance'' holds it in the org''s Circle Mint balance.'
+                required:
+                - walletId
+                - asset
+                - fiatCurrency
+                - provider
+                - destination
+                title: Circle Mint Create Payout
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^pyt-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Payout id.
+                      example: pyt-4ihii-9lonb-tmhjo9bor4odmb5h
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: The wallet ID used for the payout.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    fiatCurrency:
+                      type: string
+                      description: ISO-4217 fiat currency code for the payout.
+                    asset:
+                      oneOf:
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Erc20
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                            description: The amount of the asset to be paid out in minimum denomination.
+                          contract:
+                            type: string
+                            description: The ERC-20 contract address.
+                          network:
+                            $ref: '#/components/schemas/Network'
+                          metadata:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: The display name of the token.
+                              symbol:
+                                type: string
+                                description: The ticker symbol of the token.
+                              decimals:
+                                type: integer
+                                description: Number of decimals used by the token.
+                              verified:
+                                type: boolean
+                                description: Whether the token is verified by DFNS as legitimate.
+                            required:
+                            - decimals
+                        required:
+                        - kind
+                        - amount
+                        - contract
+                        - network
+                        title: ERC-20 Asset
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Spl
+                            - Spl2022
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                            description: The amount of the asset to be paid out in minimum denomination.
+                          mint:
+                            type: string
+                            description: The token mint address.
+                          network:
+                            $ref: '#/components/schemas/Network'
+                          metadata:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: The display name of the token.
+                              symbol:
+                                type: string
+                                description: The ticker symbol of the token.
+                              decimals:
+                                type: integer
+                                description: Number of decimals used by the token.
+                              verified:
+                                type: boolean
+                                description: Whether the token is verified by DFNS as legitimate.
+                            required:
+                            - decimals
+                        required:
+                        - kind
+                        - amount
+                        - mint
+                        - network
+                        title: SPL/SPL-2022 Asset
+                      description: The asset being paid out, including token descriptor and metadata.
+                    externalId:
+                      type: string
+                      description: Optional external identifier for idempotency.
+                    status:
+                      type: string
+                      enum:
+                      - Processing
+                      - Completed
+                      - Failed
+                      - Rejected
+                      - Expired
+                      - Canceled
+                      description: The current status of the payout.
+                    requester:
+                      allOf:
+                      - $ref: '#/components/schemas/Requester'
+                      - description: The user/token that initiated the payout.
+                    dateCreated:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was created.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    dateFinalized:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was finalized.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    provider:
+                      type: string
+                      enum:
+                      - Borderless
+                    data:
+                      type: object
+                      properties:
+                        borderlessAccountId:
+                          type: string
+                          description: The Borderless account ID associated with the payout.
+                        paymentInstructionsId:
+                          type: string
+                          description: The Borderless payment instructions ID linked to the destination bank account.
+                        paymentPurpose:
+                          type: string
+                          enum:
+                          - salary payment
+                          - personal remittance
+                          - rent payment
+                          - property purchase
+                          - owned account abroad
+                          - advertising expenses
+                          - advisory fees
+                          - business insurance
+                          - construction
+                          - delivery fees
+                          - education
+                          - exports
+                          - donation
+                          - hotel
+                          - loan payment
+                          - maintenance expenses
+                          - medical expense
+                          - office expenses
+                          - royalty fees
+                          - service charge
+                          - shares investment
+                          - tax payment
+                          - transportation fees
+                          - travel
+                          - utility bills
+                          - other
+                          description: The purpose of the withdrawal payment.
+                        dateConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the settlement was confirmed via Action Confirm.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        dateCanceled:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the settlement was canceled via Action Cancel.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        executionStatus:
+                          type: string
+                          enum:
+                          - Initializing
+                          - AwaitingPayoutInstructions
+                          - AwaitingPayoutConfirmation
+                          - SubmittingPayoutTransfer
+                          - PendingPolicyApproval
+                          - DepositProcessing
+                          - DisbursementPending
+                          - Completed
+                          - Rejected
+                          - Failed
+                          - Expired
+                          - Canceled
+                          description: The Borderless execution status.
+                        statusReason:
+                          type: string
+                          description: Reason for the current status, primarily for failure cases.
+                        country:
+                          type: string
+                          description: ISO-3166 Alpha-2 country code for the payout destination.
+                        borderlessPayoutId:
+                          type: string
+                          description: The ID assigned by Borderless when the payout is created.
+                        depositAddress:
+                          type: string
+                          description: The on-chain address to remit funds to.
+                        transferId:
+                          type: string
+                          description: The Dfns transfer ID used to settle the payout.
+                        transactionHash:
+                          type: string
+                          description: The blockchain transaction hash once the transfer is confirmed.
+                        dateDepositConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain deposit was confirmed.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        datePayoutConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when Borderless verified fiat has settled.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                      required:
+                      - borderlessAccountId
+                      - paymentInstructionsId
+                      - paymentPurpose
+                      - executionStatus
+                      - country
+                      description: Borderless provider-specific payout data.
+                  required:
+                  - id
+                  - walletId
+                  - fiatCurrency
+                  - asset
+                  - status
+                  - requester
+                  - dateCreated
+                  - provider
+                  - data
+                  title: Borderless Payout
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^pyt-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Payout id.
+                      example: pyt-4ihii-9lonb-tmhjo9bor4odmb5h
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: The wallet ID used for the payout.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    fiatCurrency:
+                      type: string
+                      description: ISO-4217 fiat currency code for the payout.
+                    asset:
+                      oneOf:
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Erc20
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                            description: The amount of the asset to be paid out in minimum denomination.
+                          contract:
+                            type: string
+                            description: The ERC-20 contract address.
+                          network:
+                            $ref: '#/components/schemas/Network'
+                          metadata:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: The display name of the token.
+                              symbol:
+                                type: string
+                                description: The ticker symbol of the token.
+                              decimals:
+                                type: integer
+                                description: Number of decimals used by the token.
+                              verified:
+                                type: boolean
+                                description: Whether the token is verified by DFNS as legitimate.
+                            required:
+                            - decimals
+                        required:
+                        - kind
+                        - amount
+                        - contract
+                        - network
+                        title: ERC-20 Asset
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Spl
+                            - Spl2022
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                            description: The amount of the asset to be paid out in minimum denomination.
+                          mint:
+                            type: string
+                            description: The token mint address.
+                          network:
+                            $ref: '#/components/schemas/Network'
+                          metadata:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: The display name of the token.
+                              symbol:
+                                type: string
+                                description: The ticker symbol of the token.
+                              decimals:
+                                type: integer
+                                description: Number of decimals used by the token.
+                              verified:
+                                type: boolean
+                                description: Whether the token is verified by DFNS as legitimate.
+                            required:
+                            - decimals
+                        required:
+                        - kind
+                        - amount
+                        - mint
+                        - network
+                        title: SPL/SPL-2022 Asset
+                      description: The asset being paid out, including token descriptor and metadata.
+                    externalId:
+                      type: string
+                      description: Optional external identifier for idempotency.
+                    status:
+                      type: string
+                      enum:
+                      - Processing
+                      - Completed
+                      - Failed
+                      - Rejected
+                      - Expired
+                      - Canceled
+                      description: The current status of the payout.
+                    requester:
+                      allOf:
+                      - $ref: '#/components/schemas/Requester'
+                      - description: The user/token that initiated the payout.
+                    dateCreated:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was created.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    dateFinalized:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was finalized.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    provider:
+                      type: string
+                      enum:
+                      - CircleMint
+                    data:
+                      type: object
+                      properties:
+                        executionStatus:
+                          type: string
+                          enum:
+                          - Initializing
+                          - AwaitingDeposit
+                          - DepositConfirmed
+                          - AwaitingPayout
+                          - Completed
+                          - Rejected
+                          - Failed
+                          - Expired
+                          - Canceled
+                          description: The Circle Mint execution status.
+                        statusReason:
+                          type: string
+                          description: Reason for the current status, primarily for failure cases.
+                        bankId:
+                          type: string
+                          description: The Circle Mint bank account id the fiat is paid out to; absent for a balance destination.
+                        rail:
+                          type: string
+                          enum:
+                          - wire
+                          - sepa
+                          - sepa_instant
+                          description: The payout rail; absent for a balance destination.
+                        paymentIntentId:
+                          type: string
+                          description: Circle payment intent id (the unique per-operation deposit intent).
+                        depositAddress:
+                          type: string
+                          description: The unique per-operation address the wallet remits USDC/EURC to.
+                        transferId:
+                          type: string
+                          description: The Dfns transfer id used to send funds to the deposit address.
+                        transactionHash:
+                          type: string
+                          description: The blockchain transaction hash of the deposit transfer.
+                        circlePayoutId:
+                          type: string
+                          description: The id assigned by Circle when the fiat payout is created.
+                        trackingRef:
+                          type: string
+                          description: Circle tracking reference for the fiat payout.
+                        dateDepositConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain deposit was confirmed.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        datePayoutConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when Circle confirmed the fiat payout.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                      required:
+                      - executionStatus
+                      description: Circle Mint provider-specific payout data.
+                  required:
+                  - id
+                  - walletId
+                  - fiatCurrency
+                  - asset
+                  - status
+                  - requester
+                  - dateCreated
+                  - provider
+                  - data
+                  title: Circle Mint Payout
+    get:
+      operationId: listPayouts
+      summary: List Payouts
+      tags:
+      - Payouts
+      security:
+      - authenticationToken: []
+      description: List payouts with optional filtering and pagination.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payouts:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Filter payouts by wallet ID.
+        required: false
+        description: Filter payouts by wallet ID.
+        name: walletId
+        in: query
+      - schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Processing
+            - Completed
+            - Failed
+            - Rejected
+            - Expired
+            - Canceled
+            description: Dfns managed payout status.
+          description: Filter payouts by status (comma-separated).
+        required: false
+        description: Filter payouts by status (comma-separated).
+        name: status
+        in: query
+      - schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Borderless
+            - CircleMint
+            description: Payout provider.
+          description: Filter payouts by provider (comma-separated).
+        required: false
+        description: Filter payouts by provider (comma-separated).
+        name: provider
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      oneOf:
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^pyt-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: Payout id.
+                            example: pyt-4ihii-9lonb-tmhjo9bor4odmb5h
+                          walletId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: The wallet ID used for the payout.
+                            example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                          fiatCurrency:
+                            type: string
+                            description: ISO-4217 fiat currency code for the payout.
+                          asset:
+                            oneOf:
+                            - type: object
+                              properties:
+                                kind:
+                                  type: string
+                                  enum:
+                                  - Erc20
+                                amount:
+                                  type: string
+                                  pattern: ^\d+$
+                                  description: The amount of the asset to be paid out in minimum denomination.
+                                contract:
+                                  type: string
+                                  description: The ERC-20 contract address.
+                                network:
+                                  $ref: '#/components/schemas/Network'
+                                metadata:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: The display name of the token.
+                                    symbol:
+                                      type: string
+                                      description: The ticker symbol of the token.
+                                    decimals:
+                                      type: integer
+                                      description: Number of decimals used by the token.
+                                    verified:
+                                      type: boolean
+                                      description: Whether the token is verified by DFNS as legitimate.
+                                  required:
+                                  - decimals
+                              required:
+                              - kind
+                              - amount
+                              - contract
+                              - network
+                              title: ERC-20 Asset
+                            - type: object
+                              properties:
+                                kind:
+                                  type: string
+                                  enum:
+                                  - Spl
+                                  - Spl2022
+                                amount:
+                                  type: string
+                                  pattern: ^\d+$
+                                  description: The amount of the asset to be paid out in minimum denomination.
+                                mint:
+                                  type: string
+                                  description: The token mint address.
+                                network:
+                                  $ref: '#/components/schemas/Network'
+                                metadata:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: The display name of the token.
+                                    symbol:
+                                      type: string
+                                      description: The ticker symbol of the token.
+                                    decimals:
+                                      type: integer
+                                      description: Number of decimals used by the token.
+                                    verified:
+                                      type: boolean
+                                      description: Whether the token is verified by DFNS as legitimate.
+                                  required:
+                                  - decimals
+                              required:
+                              - kind
+                              - amount
+                              - mint
+                              - network
+                              title: SPL/SPL-2022 Asset
+                            description: The asset being paid out, including token descriptor and metadata.
+                          externalId:
+                            type: string
+                            description: Optional external identifier for idempotency.
+                          status:
+                            type: string
+                            enum:
+                            - Processing
+                            - Completed
+                            - Failed
+                            - Rejected
+                            - Expired
+                            - Canceled
+                            description: The current status of the payout.
+                          requester:
+                            allOf:
+                            - $ref: '#/components/schemas/Requester'
+                            - description: The user/token that initiated the payout.
+                          dateCreated:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was created.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          dateFinalized:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was finalized.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          provider:
+                            type: string
+                            enum:
+                            - Borderless
+                          data:
+                            type: object
+                            properties:
+                              borderlessAccountId:
+                                type: string
+                                description: The Borderless account ID associated with the payout.
+                              paymentInstructionsId:
+                                type: string
+                                description: The Borderless payment instructions ID linked to the destination bank account.
+                              paymentPurpose:
+                                type: string
+                                enum:
+                                - salary payment
+                                - personal remittance
+                                - rent payment
+                                - property purchase
+                                - owned account abroad
+                                - advertising expenses
+                                - advisory fees
+                                - business insurance
+                                - construction
+                                - delivery fees
+                                - education
+                                - exports
+                                - donation
+                                - hotel
+                                - loan payment
+                                - maintenance expenses
+                                - medical expense
+                                - office expenses
+                                - royalty fees
+                                - service charge
+                                - shares investment
+                                - tax payment
+                                - transportation fees
+                                - travel
+                                - utility bills
+                                - other
+                                description: The purpose of the withdrawal payment.
+                              dateConfirmed:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the settlement was confirmed via Action Confirm.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                              dateCanceled:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the settlement was canceled via Action Cancel.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                              executionStatus:
+                                type: string
+                                enum:
+                                - Initializing
+                                - AwaitingPayoutInstructions
+                                - AwaitingPayoutConfirmation
+                                - SubmittingPayoutTransfer
+                                - PendingPolicyApproval
+                                - DepositProcessing
+                                - DisbursementPending
+                                - Completed
+                                - Rejected
+                                - Failed
+                                - Expired
+                                - Canceled
+                                description: The Borderless execution status.
+                              statusReason:
+                                type: string
+                                description: Reason for the current status, primarily for failure cases.
+                              country:
+                                type: string
+                                description: ISO-3166 Alpha-2 country code for the payout destination.
+                              borderlessPayoutId:
+                                type: string
+                                description: The ID assigned by Borderless when the payout is created.
+                              depositAddress:
+                                type: string
+                                description: The on-chain address to remit funds to.
+                              transferId:
+                                type: string
+                                description: The Dfns transfer ID used to settle the payout.
+                              transactionHash:
+                                type: string
+                                description: The blockchain transaction hash once the transfer is confirmed.
+                              dateDepositConfirmed:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain deposit was confirmed.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                              datePayoutConfirmed:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when Borderless verified fiat has settled.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                            required:
+                            - borderlessAccountId
+                            - paymentInstructionsId
+                            - paymentPurpose
+                            - executionStatus
+                            - country
+                            description: Borderless provider-specific payout data.
+                        required:
+                        - id
+                        - walletId
+                        - fiatCurrency
+                        - asset
+                        - status
+                        - requester
+                        - dateCreated
+                        - provider
+                        - data
+                        title: Borderless Payout
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^pyt-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: Payout id.
+                            example: pyt-4ihii-9lonb-tmhjo9bor4odmb5h
+                          walletId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: The wallet ID used for the payout.
+                            example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                          fiatCurrency:
+                            type: string
+                            description: ISO-4217 fiat currency code for the payout.
+                          asset:
+                            oneOf:
+                            - type: object
+                              properties:
+                                kind:
+                                  type: string
+                                  enum:
+                                  - Erc20
+                                amount:
+                                  type: string
+                                  pattern: ^\d+$
+                                  description: The amount of the asset to be paid out in minimum denomination.
+                                contract:
+                                  type: string
+                                  description: The ERC-20 contract address.
+                                network:
+                                  $ref: '#/components/schemas/Network'
+                                metadata:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: The display name of the token.
+                                    symbol:
+                                      type: string
+                                      description: The ticker symbol of the token.
+                                    decimals:
+                                      type: integer
+                                      description: Number of decimals used by the token.
+                                    verified:
+                                      type: boolean
+                                      description: Whether the token is verified by DFNS as legitimate.
+                                  required:
+                                  - decimals
+                              required:
+                              - kind
+                              - amount
+                              - contract
+                              - network
+                              title: ERC-20 Asset
+                            - type: object
+                              properties:
+                                kind:
+                                  type: string
+                                  enum:
+                                  - Spl
+                                  - Spl2022
+                                amount:
+                                  type: string
+                                  pattern: ^\d+$
+                                  description: The amount of the asset to be paid out in minimum denomination.
+                                mint:
+                                  type: string
+                                  description: The token mint address.
+                                network:
+                                  $ref: '#/components/schemas/Network'
+                                metadata:
+                                  type: object
+                                  properties:
+                                    name:
+                                      type: string
+                                      description: The display name of the token.
+                                    symbol:
+                                      type: string
+                                      description: The ticker symbol of the token.
+                                    decimals:
+                                      type: integer
+                                      description: Number of decimals used by the token.
+                                    verified:
+                                      type: boolean
+                                      description: Whether the token is verified by DFNS as legitimate.
+                                  required:
+                                  - decimals
+                              required:
+                              - kind
+                              - amount
+                              - mint
+                              - network
+                              title: SPL/SPL-2022 Asset
+                            description: The asset being paid out, including token descriptor and metadata.
+                          externalId:
+                            type: string
+                            description: Optional external identifier for idempotency.
+                          status:
+                            type: string
+                            enum:
+                            - Processing
+                            - Completed
+                            - Failed
+                            - Rejected
+                            - Expired
+                            - Canceled
+                            description: The current status of the payout.
+                          requester:
+                            allOf:
+                            - $ref: '#/components/schemas/Requester'
+                            - description: The user/token that initiated the payout.
+                          dateCreated:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was created.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          dateFinalized:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was finalized.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          provider:
+                            type: string
+                            enum:
+                            - CircleMint
+                          data:
+                            type: object
+                            properties:
+                              executionStatus:
+                                type: string
+                                enum:
+                                - Initializing
+                                - AwaitingDeposit
+                                - DepositConfirmed
+                                - AwaitingPayout
+                                - Completed
+                                - Rejected
+                                - Failed
+                                - Expired
+                                - Canceled
+                                description: The Circle Mint execution status.
+                              statusReason:
+                                type: string
+                                description: Reason for the current status, primarily for failure cases.
+                              bankId:
+                                type: string
+                                description: The Circle Mint bank account id the fiat is paid out to; absent for a balance destination.
+                              rail:
+                                type: string
+                                enum:
+                                - wire
+                                - sepa
+                                - sepa_instant
+                                description: The payout rail; absent for a balance destination.
+                              paymentIntentId:
+                                type: string
+                                description: Circle payment intent id (the unique per-operation deposit intent).
+                              depositAddress:
+                                type: string
+                                description: The unique per-operation address the wallet remits USDC/EURC to.
+                              transferId:
+                                type: string
+                                description: The Dfns transfer id used to send funds to the deposit address.
+                              transactionHash:
+                                type: string
+                                description: The blockchain transaction hash of the deposit transfer.
+                              circlePayoutId:
+                                type: string
+                                description: The id assigned by Circle when the fiat payout is created.
+                              trackingRef:
+                                type: string
+                                description: Circle tracking reference for the fiat payout.
+                              dateDepositConfirmed:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain deposit was confirmed.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                              datePayoutConfirmed:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when Circle confirmed the fiat payout.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                            required:
+                            - executionStatus
+                            description: Circle Mint provider-specific payout data.
+                        required:
+                        - id
+                        - walletId
+                        - fiatCurrency
+                        - asset
+                        - status
+                        - requester
+                        - dateCreated
+                        - provider
+                        - data
+                        title: Circle Mint Payout
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /payouts/quote:
+    post:
+      operationId: requestPayoutQuote
+      summary: Request Payout Quote
+      tags:
+      - Payouts
+      security:
+      - authenticationToken: []
+      description: Request a quote from a given provider for a payout. Returns estimated fiat amount and fees.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payouts:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet ID to use for determining the network.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  asset:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address.
+                      required:
+                      - kind
+                      - amount
+                      - contract
+                      title: ERC-20 Asset
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        mint:
+                          type: string
+                          description: The token mint address.
+                      required:
+                      - kind
+                      - amount
+                      - mint
+                      title: SPL/SPL-2022 Asset
+                    description: The asset to be paid out.
+                  fiatCurrency:
+                    type: string
+                    pattern: ^[A-Z]{3}$
+                    description: ISO-4217 fiat currency code for the payout quote.
+                  provider:
+                    type: string
+                    enum:
+                    - Borderless
+                  country:
+                    type: string
+                    pattern: ^[A-Z]{2}$
+                    description: ISO-3166 Alpha-2 country code for the payout destination.
+                required:
+                - walletId
+                - asset
+                - fiatCurrency
+                - provider
+                - country
+                title: Borderless Create Payout Quote
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet ID to use for determining the network.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  asset:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address.
+                      required:
+                      - kind
+                      - amount
+                      - contract
+                      title: ERC-20 Asset
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        mint:
+                          type: string
+                          description: The token mint address.
+                      required:
+                      - kind
+                      - amount
+                      - mint
+                      title: SPL/SPL-2022 Asset
+                    description: The asset to be paid out.
+                  fiatCurrency:
+                    type: string
+                    pattern: ^[A-Z]{3}$
+                    description: ISO-4217 fiat currency code for the payout quote.
+                  provider:
+                    type: string
+                    enum:
+                    - CircleMint
+                required:
+                - walletId
+                - asset
+                - fiatCurrency
+                - provider
+                title: Circle Mint Create Payout Quote
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    type: string
+                    enum:
+                    - Borderless
+                    - CircleMint
+                    description: Payout provider.
+                  asset:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address.
+                        network:
+                          $ref: '#/components/schemas/Network'
+                        metadata:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: The display name of the token.
+                            symbol:
+                              type: string
+                              description: The ticker symbol of the token.
+                            decimals:
+                              type: integer
+                              description: Number of decimals used by the token.
+                            verified:
+                              type: boolean
+                              description: Whether the token is verified by DFNS as legitimate.
+                          required:
+                          - decimals
+                      required:
+                      - kind
+                      - amount
+                      - contract
+                      - network
+                      title: ERC-20 Asset
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        mint:
+                          type: string
+                          description: The token mint address.
+                        network:
+                          $ref: '#/components/schemas/Network'
+                        metadata:
+                          type: object
+                          properties:
+                            name:
+                              type: string
+                              description: The display name of the token.
+                            symbol:
+                              type: string
+                              description: The ticker symbol of the token.
+                            decimals:
+                              type: integer
+                              description: Number of decimals used by the token.
+                            verified:
+                              type: boolean
+                              description: Whether the token is verified by DFNS as legitimate.
+                          required:
+                          - decimals
+                      required:
+                      - kind
+                      - amount
+                      - mint
+                      - network
+                      title: SPL/SPL-2022 Asset
+                    description: The asset being quoted, enriched with network and metadata.
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: ISO 8601 timestamp when the quote was generated.
+                  quotes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        quoteId:
+                          type: string
+                          description: Quote ID from the provider, if applicable.
+                        offer:
+                          type: object
+                          properties:
+                            fiatCurrency:
+                              type: string
+                              pattern: ^[A-Z]{3}$
+                              description: ISO-4217 fiat currency code.
+                            amount:
+                              type: number
+                              description: Amount of fiat currency to be received net of fees.
+                            fees:
+                              type: number
+                              description: Total fees associated with the transfer.
+                          required:
+                          - fiatCurrency
+                          - amount
+                          - fees
+                          description: The offer from the provider.
+                      required:
+                      - offer
+                    description: Array of quotes from the provider(s).
+                required:
+                - provider
+                - asset
+                - timestamp
+                - quotes
+  /payouts/{payoutId}:
+    get:
+      operationId: getPayout
+      x-dfns-deprecated-operation-id: getPayoutStatus
+      summary: Get Payout Status
+      tags:
+      - Payouts
+      security:
+      - authenticationToken: []
+      description: Retrieve the current status of a payout by its ID.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payouts:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Payout id.
+        required: true
+        description: Payout id.
+        name: payoutId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^pyt-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Payout id.
+                      example: pyt-4ihii-9lonb-tmhjo9bor4odmb5h
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: The wallet ID used for the payout.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    fiatCurrency:
+                      type: string
+                      description: ISO-4217 fiat currency code for the payout.
+                    asset:
+                      oneOf:
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Erc20
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                            description: The amount of the asset to be paid out in minimum denomination.
+                          contract:
+                            type: string
+                            description: The ERC-20 contract address.
+                          network:
+                            $ref: '#/components/schemas/Network'
+                          metadata:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: The display name of the token.
+                              symbol:
+                                type: string
+                                description: The ticker symbol of the token.
+                              decimals:
+                                type: integer
+                                description: Number of decimals used by the token.
+                              verified:
+                                type: boolean
+                                description: Whether the token is verified by DFNS as legitimate.
+                            required:
+                            - decimals
+                        required:
+                        - kind
+                        - amount
+                        - contract
+                        - network
+                        title: ERC-20 Asset
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Spl
+                            - Spl2022
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                            description: The amount of the asset to be paid out in minimum denomination.
+                          mint:
+                            type: string
+                            description: The token mint address.
+                          network:
+                            $ref: '#/components/schemas/Network'
+                          metadata:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: The display name of the token.
+                              symbol:
+                                type: string
+                                description: The ticker symbol of the token.
+                              decimals:
+                                type: integer
+                                description: Number of decimals used by the token.
+                              verified:
+                                type: boolean
+                                description: Whether the token is verified by DFNS as legitimate.
+                            required:
+                            - decimals
+                        required:
+                        - kind
+                        - amount
+                        - mint
+                        - network
+                        title: SPL/SPL-2022 Asset
+                      description: The asset being paid out, including token descriptor and metadata.
+                    externalId:
+                      type: string
+                      description: Optional external identifier for idempotency.
+                    status:
+                      type: string
+                      enum:
+                      - Processing
+                      - Completed
+                      - Failed
+                      - Rejected
+                      - Expired
+                      - Canceled
+                      description: The current status of the payout.
+                    requester:
+                      allOf:
+                      - $ref: '#/components/schemas/Requester'
+                      - description: The user/token that initiated the payout.
+                    dateCreated:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was created.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    dateFinalized:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was finalized.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    provider:
+                      type: string
+                      enum:
+                      - Borderless
+                    data:
+                      type: object
+                      properties:
+                        borderlessAccountId:
+                          type: string
+                          description: The Borderless account ID associated with the payout.
+                        paymentInstructionsId:
+                          type: string
+                          description: The Borderless payment instructions ID linked to the destination bank account.
+                        paymentPurpose:
+                          type: string
+                          enum:
+                          - salary payment
+                          - personal remittance
+                          - rent payment
+                          - property purchase
+                          - owned account abroad
+                          - advertising expenses
+                          - advisory fees
+                          - business insurance
+                          - construction
+                          - delivery fees
+                          - education
+                          - exports
+                          - donation
+                          - hotel
+                          - loan payment
+                          - maintenance expenses
+                          - medical expense
+                          - office expenses
+                          - royalty fees
+                          - service charge
+                          - shares investment
+                          - tax payment
+                          - transportation fees
+                          - travel
+                          - utility bills
+                          - other
+                          description: The purpose of the withdrawal payment.
+                        dateConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the settlement was confirmed via Action Confirm.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        dateCanceled:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the settlement was canceled via Action Cancel.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        executionStatus:
+                          type: string
+                          enum:
+                          - Initializing
+                          - AwaitingPayoutInstructions
+                          - AwaitingPayoutConfirmation
+                          - SubmittingPayoutTransfer
+                          - PendingPolicyApproval
+                          - DepositProcessing
+                          - DisbursementPending
+                          - Completed
+                          - Rejected
+                          - Failed
+                          - Expired
+                          - Canceled
+                          description: The Borderless execution status.
+                        statusReason:
+                          type: string
+                          description: Reason for the current status, primarily for failure cases.
+                        country:
+                          type: string
+                          description: ISO-3166 Alpha-2 country code for the payout destination.
+                        borderlessPayoutId:
+                          type: string
+                          description: The ID assigned by Borderless when the payout is created.
+                        depositAddress:
+                          type: string
+                          description: The on-chain address to remit funds to.
+                        transferId:
+                          type: string
+                          description: The Dfns transfer ID used to settle the payout.
+                        transactionHash:
+                          type: string
+                          description: The blockchain transaction hash once the transfer is confirmed.
+                        dateDepositConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain deposit was confirmed.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        datePayoutConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when Borderless verified fiat has settled.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                      required:
+                      - borderlessAccountId
+                      - paymentInstructionsId
+                      - paymentPurpose
+                      - executionStatus
+                      - country
+                      description: Borderless provider-specific payout data.
+                  required:
+                  - id
+                  - walletId
+                  - fiatCurrency
+                  - asset
+                  - status
+                  - requester
+                  - dateCreated
+                  - provider
+                  - data
+                  title: Borderless Payout
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^pyt-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Payout id.
+                      example: pyt-4ihii-9lonb-tmhjo9bor4odmb5h
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: The wallet ID used for the payout.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    fiatCurrency:
+                      type: string
+                      description: ISO-4217 fiat currency code for the payout.
+                    asset:
+                      oneOf:
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Erc20
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                            description: The amount of the asset to be paid out in minimum denomination.
+                          contract:
+                            type: string
+                            description: The ERC-20 contract address.
+                          network:
+                            $ref: '#/components/schemas/Network'
+                          metadata:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: The display name of the token.
+                              symbol:
+                                type: string
+                                description: The ticker symbol of the token.
+                              decimals:
+                                type: integer
+                                description: Number of decimals used by the token.
+                              verified:
+                                type: boolean
+                                description: Whether the token is verified by DFNS as legitimate.
+                            required:
+                            - decimals
+                        required:
+                        - kind
+                        - amount
+                        - contract
+                        - network
+                        title: ERC-20 Asset
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Spl
+                            - Spl2022
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                            description: The amount of the asset to be paid out in minimum denomination.
+                          mint:
+                            type: string
+                            description: The token mint address.
+                          network:
+                            $ref: '#/components/schemas/Network'
+                          metadata:
+                            type: object
+                            properties:
+                              name:
+                                type: string
+                                description: The display name of the token.
+                              symbol:
+                                type: string
+                                description: The ticker symbol of the token.
+                              decimals:
+                                type: integer
+                                description: Number of decimals used by the token.
+                              verified:
+                                type: boolean
+                                description: Whether the token is verified by DFNS as legitimate.
+                            required:
+                            - decimals
+                        required:
+                        - kind
+                        - amount
+                        - mint
+                        - network
+                        title: SPL/SPL-2022 Asset
+                      description: The asset being paid out, including token descriptor and metadata.
+                    externalId:
+                      type: string
+                      description: Optional external identifier for idempotency.
+                    status:
+                      type: string
+                      enum:
+                      - Processing
+                      - Completed
+                      - Failed
+                      - Rejected
+                      - Expired
+                      - Canceled
+                      description: The current status of the payout.
+                    requester:
+                      allOf:
+                      - $ref: '#/components/schemas/Requester'
+                      - description: The user/token that initiated the payout.
+                    dateCreated:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was created.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    dateFinalized:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was finalized.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    provider:
+                      type: string
+                      enum:
+                      - CircleMint
+                    data:
+                      type: object
+                      properties:
+                        executionStatus:
+                          type: string
+                          enum:
+                          - Initializing
+                          - AwaitingDeposit
+                          - DepositConfirmed
+                          - AwaitingPayout
+                          - Completed
+                          - Rejected
+                          - Failed
+                          - Expired
+                          - Canceled
+                          description: The Circle Mint execution status.
+                        statusReason:
+                          type: string
+                          description: Reason for the current status, primarily for failure cases.
+                        bankId:
+                          type: string
+                          description: The Circle Mint bank account id the fiat is paid out to; absent for a balance destination.
+                        rail:
+                          type: string
+                          enum:
+                          - wire
+                          - sepa
+                          - sepa_instant
+                          description: The payout rail; absent for a balance destination.
+                        paymentIntentId:
+                          type: string
+                          description: Circle payment intent id (the unique per-operation deposit intent).
+                        depositAddress:
+                          type: string
+                          description: The unique per-operation address the wallet remits USDC/EURC to.
+                        transferId:
+                          type: string
+                          description: The Dfns transfer id used to send funds to the deposit address.
+                        transactionHash:
+                          type: string
+                          description: The blockchain transaction hash of the deposit transfer.
+                        circlePayoutId:
+                          type: string
+                          description: The id assigned by Circle when the fiat payout is created.
+                        trackingRef:
+                          type: string
+                          description: Circle tracking reference for the fiat payout.
+                        dateDepositConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain deposit was confirmed.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        datePayoutConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when Circle confirmed the fiat payout.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                      required:
+                      - executionStatus
+                      description: Circle Mint provider-specific payout data.
+                  required:
+                  - id
+                  - walletId
+                  - fiatCurrency
+                  - asset
+                  - status
+                  - requester
+                  - dateCreated
+                  - provider
+                  - data
+                  title: Circle Mint Payout
+  /payouts/{payoutId}/action:
+    post:
+      operationId: createPayoutAction
+      summary: Create Payout Action
+      tags:
+      - Payouts
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Perform an action on a payout, such as confirming or canceling.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payouts:Update`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Payout id.
+        required: true
+        description: Payout id.
+        name: payoutId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  action:
+                    type: string
+                    enum:
+                    - Confirm
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet ID to use for the transfer.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  transfer:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address.
+                        to:
+                          type: string
+                          pattern: ^0x[0-9a-fA-F]{40}$
+                          description: The counterparty address for the payout.
+                      required:
+                      - kind
+                      - amount
+                      - contract
+                      - to
+                      title: ERC-20 Transfer
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        amount:
+                          type: string
+                          pattern: ^\d+$
+                          description: The amount of the asset to be paid out in minimum denomination.
+                        mint:
+                          type: string
+                          description: The token mint address.
+                        to:
+                          type: string
+                          pattern: ^[1-9A-HJ-NP-Za-km-z]{32,44}$
+                          description: The counterparty address for the payout.
+                      required:
+                      - kind
+                      - amount
+                      - mint
+                      - to
+                      title: SPL/SPL-2022 Transfer
+                    description: The transfer details for the payout settlement.
+                required:
+                - action
+                - walletId
+                - transfer
+                title: Confirm Payout Action
+              - type: object
+                properties:
+                  action:
+                    type: string
+                    enum:
+                    - Cancel
+                required:
+                - action
+                title: Cancel Payout Action
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: {}
+webhooks:
+  payout.action.required:
+    post:
+      summary: Payout Action Required
+      description: A payout requires an action (for example, a confirmation) before it can proceed.
+      tags:
+      - Payouts
+      requestBody:
+        content:
+          application/json:
+            schema:
+              allOf:
+              - $ref: '#/components/schemas/WebhookEnvelopeBase'
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                    - payout.action.required
+                  data:
+                    type: object
+                    properties:
+                      actionKind:
+                        type: string
+                        enum:
+                        - Confirmation
+                        description: The kind of action required.
+                      payout:
+                        oneOf:
+                        - type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 1
+                              maxLength: 64
+                              pattern: ^pyt-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                              description: Payout id.
+                              example: pyt-4ihii-9lonb-tmhjo9bor4odmb5h
+                            walletId:
+                              type: string
+                              minLength: 1
+                              maxLength: 64
+                              pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                              description: The wallet ID used for the payout.
+                              example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                            fiatCurrency:
+                              type: string
+                              description: ISO-4217 fiat currency code for the payout.
+                            asset:
+                              oneOf:
+                              - type: object
+                                properties:
+                                  kind:
+                                    type: string
+                                    enum:
+                                    - Erc20
+                                  amount:
+                                    type: string
+                                    pattern: ^\d+$
+                                    description: The amount of the asset to be paid out in minimum denomination.
+                                  contract:
+                                    type: string
+                                    description: The ERC-20 contract address.
+                                  network:
+                                    $ref: '#/components/schemas/Network'
+                                  metadata:
+                                    type: object
+                                    properties:
+                                      name:
+                                        type: string
+                                        description: The display name of the token.
+                                      symbol:
+                                        type: string
+                                        description: The ticker symbol of the token.
+                                      decimals:
+                                        type: integer
+                                        description: Number of decimals used by the token.
+                                      verified:
+                                        type: boolean
+                                        description: Whether the token is verified by DFNS as legitimate.
+                                    required:
+                                    - decimals
+                                required:
+                                - kind
+                                - amount
+                                - contract
+                                - network
+                                title: ERC-20 Asset
+                              - type: object
+                                properties:
+                                  kind:
+                                    type: string
+                                    enum:
+                                    - Spl
+                                    - Spl2022
+                                  amount:
+                                    type: string
+                                    pattern: ^\d+$
+                                    description: The amount of the asset to be paid out in minimum denomination.
+                                  mint:
+                                    type: string
+                                    description: The token mint address.
+                                  network:
+                                    $ref: '#/components/schemas/Network'
+                                  metadata:
+                                    type: object
+                                    properties:
+                                      name:
+                                        type: string
+                                        description: The display name of the token.
+                                      symbol:
+                                        type: string
+                                        description: The ticker symbol of the token.
+                                      decimals:
+                                        type: integer
+                                        description: Number of decimals used by the token.
+                                      verified:
+                                        type: boolean
+                                        description: Whether the token is verified by DFNS as legitimate.
+                                    required:
+                                    - decimals
+                                required:
+                                - kind
+                                - amount
+                                - mint
+                                - network
+                                title: SPL/SPL-2022 Asset
+                              description: The asset being paid out, including token descriptor and metadata.
+                            externalId:
+                              type: string
+                              description: Optional external identifier for idempotency.
+                            status:
+                              type: string
+                              enum:
+                              - Processing
+                              - Completed
+                              - Failed
+                              - Rejected
+                              - Expired
+                              - Canceled
+                              description: The current status of the payout.
+                            requester:
+                              allOf:
+                              - $ref: '#/components/schemas/Requester'
+                              - description: The user/token that initiated the payout.
+                            dateCreated:
+                              type: string
+                              format: date-time
+                              description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was created.'
+                              example: 2023-04-14 20:41:28.715000+00:00
+                            dateFinalized:
+                              type: string
+                              format: date-time
+                              description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was finalized.'
+                              example: 2023-04-14 20:41:28.715000+00:00
+                            provider:
+                              type: string
+                              enum:
+                              - Borderless
+                            data:
+                              type: object
+                              properties:
+                                borderlessAccountId:
+                                  type: string
+                                  description: The Borderless account ID associated with the payout.
+                                paymentInstructionsId:
+                                  type: string
+                                  description: The Borderless payment instructions ID linked to the destination bank account.
+                                paymentPurpose:
+                                  type: string
+                                  enum:
+                                  - salary payment
+                                  - personal remittance
+                                  - rent payment
+                                  - property purchase
+                                  - owned account abroad
+                                  - advertising expenses
+                                  - advisory fees
+                                  - business insurance
+                                  - construction
+                                  - delivery fees
+                                  - education
+                                  - exports
+                                  - donation
+                                  - hotel
+                                  - loan payment
+                                  - maintenance expenses
+                                  - medical expense
+                                  - office expenses
+                                  - royalty fees
+                                  - service charge
+                                  - shares investment
+                                  - tax payment
+                                  - transportation fees
+                                  - travel
+                                  - utility bills
+                                  - other
+                                  description: The purpose of the withdrawal payment.
+                                dateConfirmed:
+                                  type: string
+                                  format: date-time
+                                  description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the settlement was confirmed via Action Confirm.'
+                                  example: 2023-04-14 20:41:28.715000+00:00
+                                dateCanceled:
+                                  type: string
+                                  format: date-time
+                                  description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the settlement was canceled via Action Cancel.'
+                                  example: 2023-04-14 20:41:28.715000+00:00
+                                executionStatus:
+                                  type: string
+                                  enum:
+                                  - Initializing
+                                  - AwaitingPayoutInstructions
+                                  - AwaitingPayoutConfirmation
+                                  - SubmittingPayoutTransfer
+                                  - PendingPolicyApproval
+                                  - DepositProcessing
+                                  - DisbursementPending
+                                  - Completed
+                                  - Rejected
+                                  - Failed
+                                  - Expired
+                                  - Canceled
+                                  description: The Borderless execution status.
+                                statusReason:
+                                  type: string
+                                  description: Reason for the current status, primarily for failure cases.
+                                country:
+                                  type: string
+                                  description: ISO-3166 Alpha-2 country code for the payout destination.
+                                borderlessPayoutId:
+                                  type: string
+                                  description: The ID assigned by Borderless when the payout is created.
+                                depositAddress:
+                                  type: string
+                                  description: The on-chain address to remit funds to.
+                                transferId:
+                                  type: string
+                                  description: The Dfns transfer ID used to settle the payout.
+                                transactionHash:
+                                  type: string
+                                  description: The blockchain transaction hash once the transfer is confirmed.
+                                dateDepositConfirmed:
+                                  type: string
+                                  format: date-time
+                                  description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain deposit was confirmed.'
+                                  example: 2023-04-14 20:41:28.715000+00:00
+                                datePayoutConfirmed:
+                                  type: string
+                                  format: date-time
+                                  description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when Borderless verified fiat has settled.'
+                                  example: 2023-04-14 20:41:28.715000+00:00
+                              required:
+                              - borderlessAccountId
+                              - paymentInstructionsId
+                              - paymentPurpose
+                              - executionStatus
+                              - country
+                              description: Borderless provider-specific payout data.
+                          required:
+                          - id
+                          - walletId
+                          - fiatCurrency
+                          - asset
+                          - status
+                          - requester
+                          - dateCreated
+                          - provider
+                          - data
+                          title: Borderless Payout
+                        - type: object
+                          properties:
+                            id:
+                              type: string
+                              minLength: 1
+                              maxLength: 64
+                              pattern: ^pyt-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                              description: Payout id.
+                              example: pyt-4ihii-9lonb-tmhjo9bor4odmb5h
+                            walletId:
+                              type: string
+                              minLength: 1
+                              maxLength: 64
+                              pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                              description: The wallet ID used for the payout.
+                              example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                            fiatCurrency:
+                              type: string
+                              description: ISO-4217 fiat currency code for the payout.
+                            asset:
+                              oneOf:
+                              - type: object
+                                properties:
+                                  kind:
+                                    type: string
+                                    enum:
+                                    - Erc20
+                                  amount:
+                                    type: string
+                                    pattern: ^\d+$
+                                    description: The amount of the asset to be paid out in minimum denomination.
+                                  contract:
+                                    type: string
+                                    description: The ERC-20 contract address.
+                                  network:
+                                    $ref: '#/components/schemas/Network'
+                                  metadata:
+                                    type: object
+                                    properties:
+                                      name:
+                                        type: string
+                                        description: The display name of the token.
+                                      symbol:
+                                        type: string
+                                        description: The ticker symbol of the token.
+                                      decimals:
+                                        type: integer
+                                        description: Number of decimals used by the token.
+                                      verified:
+                                        type: boolean
+                                        description: Whether the token is verified by DFNS as legitimate.
+                                    required:
+                                    - decimals
+                                required:
+                                - kind
+                                - amount
+                                - contract
+                                - network
+                                title: ERC-20 Asset
+                              - type: object
+                                properties:
+                                  kind:
+                                    type: string
+                                    enum:
+                                    - Spl
+                                    - Spl2022
+                                  amount:
+                                    type: string
+                                    pattern: ^\d+$
+                                    description: The amount of the asset to be paid out in minimum denomination.
+                                  mint:
+                                    type: string
+                                    description: The token mint address.
+                                  network:
+                                    $ref: '#/components/schemas/Network'
+                                  metadata:
+                                    type: object
+                                    properties:
+                                      name:
+                                        type: string
+                                        description: The display name of the token.
+                                      symbol:
+                                        type: string
+                                        description: The ticker symbol of the token.
+                                      decimals:
+                                        type: integer
+                                        description: Number of decimals used by the token.
+                                      verified:
+                                        type: boolean
+                                        description: Whether the token is verified by DFNS as legitimate.
+                                    required:
+                                    - decimals
+                                required:
+                                - kind
+                                - amount
+                                - mint
+                                - network
+                                title: SPL/SPL-2022 Asset
+                              description: The asset being paid out, including token descriptor and metadata.
+                            externalId:
+                              type: string
+                              description: Optional external identifier for idempotency.
+                            status:
+                              type: string
+                              enum:
+                              - Processing
+                              - Completed
+                              - Failed
+                              - Rejected
+                              - Expired
+                              - Canceled
+                              description: The current status of the payout.
+                            requester:
+                              allOf:
+                              - $ref: '#/components/schemas/Requester'
+                              - description: The user/token that initiated the payout.
+                            dateCreated:
+                              type: string
+                              format: date-time
+                              description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was created.'
+                              example: 2023-04-14 20:41:28.715000+00:00
+                            dateFinalized:
+                              type: string
+                              format: date-time
+                              description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payout was finalized.'
+                              example: 2023-04-14 20:41:28.715000+00:00
+                            provider:
+                              type: string
+                              enum:
+                              - CircleMint
+                            data:
+                              type: object
+                              properties:
+                                executionStatus:
+                                  type: string
+                                  enum:
+                                  - Initializing
+                                  - AwaitingDeposit
+                                  - DepositConfirmed
+                                  - AwaitingPayout
+                                  - Completed
+                                  - Rejected
+                                  - Failed
+                                  - Expired
+                                  - Canceled
+                                  description: The Circle Mint execution status.
+                                statusReason:
+                                  type: string
+                                  description: Reason for the current status, primarily for failure cases.
+                                bankId:
+                                  type: string
+                                  description: The Circle Mint bank account id the fiat is paid out to; absent for a balance destination.
+                                rail:
+                                  type: string
+                                  enum:
+                                  - wire
+                                  - sepa
+                                  - sepa_instant
+                                  description: The payout rail; absent for a balance destination.
+                                paymentIntentId:
+                                  type: string
+                                  description: Circle payment intent id (the unique per-operation deposit intent).
+                                depositAddress:
+                                  type: string
+                                  description: The unique per-operation address the wallet remits USDC/EURC to.
+                                transferId:
+                                  type: string
+                                  description: The Dfns transfer id used to send funds to the deposit address.
+                                transactionHash:
+                                  type: string
+                                  description: The blockchain transaction hash of the deposit transfer.
+                                circlePayoutId:
+                                  type: string
+                                  description: The id assigned by Circle when the fiat payout is created.
+                                trackingRef:
+                                  type: string
+                                  description: Circle tracking reference for the fiat payout.
+                                dateDepositConfirmed:
+                                  type: string
+                                  format: date-time
+                                  description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain deposit was confirmed.'
+                                  example: 2023-04-14 20:41:28.715000+00:00
+                                datePayoutConfirmed:
+                                  type: string
+                                  format: date-time
+                                  description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when Circle confirmed the fiat payout.'
+                                  example: 2023-04-14 20:41:28.715000+00:00
+                              required:
+                              - executionStatus
+                              description: Circle Mint provider-specific payout data.
+                          required:
+                          - id
+                          - walletId
+                          - fiatCurrency
+                          - asset
+                          - status
+                          - requester
+                          - dateCreated
+                          - provider
+                          - data
+                          title: Circle Mint Payout
+                    required:
+                    - actionKind
+                    - payout
+                required:
+                - kind
+                - data
+      responses:
+        '200':
+          description: Respond with a 200 to indicate that the event was successfully received. If your endpoint returns anything else than a 200 status code, we will consider the delivery has failed and retry later. See details [here](https://docs.dfns.co/api-reference/webhook-events#webhook-event-deliveries-%26-retries).
+components:
+  schemas:
+    WebhookEnvelopeBase:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^whe-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Unique identifier for this webhook event.
+          example: whe-544ul-uqgad-jkgltj5p6fvd04cj
+        date:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). Timestamp when the event occurred.'
+          example: 2023-04-14 20:41:28.715000+00:00
+        retryOf:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^whe-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: ID of the original event if this is a retry.
+          example: whe-544ul-uqgad-jkgltj5p6fvd04cj
+        timestampSent:
+          type: integer
+          description: Unix timestamp when the event was sent
+          example: 1719566994
+        deliveryAttempt:
+          type: integer
+          minimum: 1
+          description: Delivery attempt number
+          example: 1
+      required:
+      - id
+      - date
+      - timestampSent
+      - deliveryAttempt
+    Network:
+      type: string
+      title: Network
+      enum:
+      - Algorand
+      - AlgorandTestnet
+      - Aptos
+      - AptosTestnet
+      - ArbitrumOne
+      - ArbitrumSepolia
+      - Arc
+      - ArcTestnet
+      - Areum
+      - AvalancheC
+      - AvalancheCFuji
+      - Base
+      - BaseSepolia
+      - Berachain
+      - BerachainBepolia
+      - Bitcoin
+      - BitcoinSignet
+      - BitcoinTestnet4
+      - BitcoinCash
+      - Bob
+      - BobSepolia
+      - Bsc
+      - BscTestnet
+      - Canton
+      - CantonTestnet
+      - Cardano
+      - CardanoPreprod
+      - Concordium
+      - ConcordiumTestnet
+      - Celo
+      - CeloSepolia
+      - Codex
+      - CodexSepolia
+      - CosmosHub4
+      - CosmosIcsTestnet
+      - Dogecoin
+      - DogecoinTestnet
+      - Ethereum
+      - EthereumClassic
+      - EthereumClassicMordor
+      - EthereumSepolia
+      - EthereumHoodi
+      - FlareC
+      - FlareCCoston2
+      - FlowEvm
+      - FlowEvmTestnet
+      - Hedera
+      - HederaTestnet
+      - Ink
+      - InkSepolia
+      - InternetComputer
+      - Ion
+      - IonTestnet
+      - Iota
+      - IotaTestnet
+      - Kusama
+      - KusamaAssetHub
+      - Litecoin
+      - LitecoinTestnet
+      - Monad
+      - MonadTestnet
+      - Movement
+      - MovementTestnet
+      - Near
+      - NearTestnet
+      - Optimism
+      - OptimismSepolia
+      - Origyn
+      - Plasma
+      - PlasmaTestnet
+      - Plume
+      - PlumeSepolia
+      - Paseo
+      - PaseoAssetHub
+      - Polkadot
+      - PolkadotAssetHub
+      - Polygon
+      - PolygonAmoy
+      - Polymesh
+      - PolymeshTestnet
+      - Rayls
+      - RaylsTestnet
+      - Robinhood
+      - RobinhoodSepolia
+      - SeiAtlantic2
+      - SeiPacific1
+      - Solana
+      - SolanaDevnet
+      - Sonic
+      - SonicTestnet
+      - Starknet
+      - StarknetSepolia
+      - Stellar
+      - StellarTestnet
+      - Sui
+      - SuiTestnet
+      - Tezos
+      - TezosShadownet
+      - Tempo
+      - TempoModerato
+      - Tsc
+      - TscTestnet1
+      - Ton
+      - TonTestnet
+      - Tron
+      - TronNile
+      - Westend
+      - WestendAssetHub
+      - Xdc
+      - XdcApothem
+      - XLayer
+      - XLayerSepolia
+      - XrpLedger
+      - XrpLedgerTestnet
+    Requester:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^us-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User id.
+          example: us-6b58p-r53sr-rlrd3l5cj3uc4ome
+        tokenId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^to-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Token id.
+          example: to-202a0-cdo33-o65mbt6q758lvvnt
+      required:
+      - userId
+      description: The user who initiated the request.
+  securitySchemes:
+    authenticationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

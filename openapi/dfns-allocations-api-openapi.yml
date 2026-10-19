@@ -1,0 +1,2897 @@
+openapi: 3.2.0
+info:
+  version: 2.0.249
+  title: Dfns Allocations API
+servers:
+- url: https://api.dfns.io
+  description: Default - Europe
+- url: https://api.uae.dfns.io
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
+tags:
+- name: Allocations
+paths:
+  /allocations/get-0fns-quote:
+    post:
+      operationId: createAllocationQuote
+      summary: Request 0fns Allocation Quote
+      tags:
+      - Allocations
+      security:
+      - authenticationToken: []
+      description: Get a price quote for a 0fns deposit or withdrawal at the current market rate.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\nNo permission required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                walletId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Wallet id.
+                  example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                protocol:
+                  type: string
+                  enum:
+                  - 0fns
+                kind:
+                  type: string
+                  enum:
+                  - Deposit
+                  - Withdraw
+                  description: 'The type of action being performed on the allocation investment: Deposit to add funds or Withdraw to remove funds.'
+                sourceAsset:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - Erc20
+                    contract:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{40}$
+                    amount:
+                      type: string
+                      pattern: ^\d+$
+                  required:
+                  - kind
+                  - contract
+                  - amount
+                  title: EVM Fungible Token (ERC-20)
+                targetAsset:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - Erc20
+                    contract:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{40}$
+                  required:
+                  - kind
+                  - contract
+              required:
+              - walletId
+              - protocol
+              - kind
+              - sourceAsset
+              - targetAsset
+              description: 'Request a 0fns conversion price quote (deposit: stablecoin→0fns; withdraw: 0fns→stablecoin).'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Wallet id.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  protocol:
+                    type: string
+                    enum:
+                    - 0fns
+                    - SkySusds
+                    - GauntletUsdcPrime
+                    - SteakhouseUsdt
+                    - GauntletUsdcPrimeBase
+                    - SteakhouseUsdcBase
+                    - SentoraPyusdMain
+                    description: The DeFi protocol used for allocation generation. See [Create Allocation](https://docs.dfns.co/api-reference/allocations/create-allocation) for each protocol's provider, deposit asset, and network.
+                  kind:
+                    type: string
+                    enum:
+                    - Deposit
+                    - Withdraw
+                    description: 'The type of action being performed on the allocation investment: Deposit to add funds or Withdraw to remove funds.'
+                  sourceAsset:
+                    allOf:
+                    - oneOf:
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Native
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                        required:
+                        - kind
+                        - amount
+                        title: Native Asset
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Erc20
+                          contract:
+                            type: string
+                            pattern: ^0x[0-9a-fA-F]{40}$
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                        required:
+                        - kind
+                        - contract
+                        - amount
+                        title: EVM Fungible Token (ERC-20)
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Spl
+                          mint:
+                            type: string
+                            pattern: ^[1-9A-HJ-NP-Za-km-z]{32,44}$
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                        required:
+                        - kind
+                        - mint
+                        - amount
+                        title: Solana Fungible Token (SPL)
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Sep41
+                          issuer:
+                            type: string
+                            pattern: ^(G[A-Z0-9]{55}|M[A-Z0-9]{68})$
+                          assetCode:
+                            type: string
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                        required:
+                        - kind
+                        - issuer
+                        - assetCode
+                        - amount
+                        title: Stellar Fungible Token (SEP-41)
+                    - type: object
+                      properties:
+                        metadata:
+                          type: object
+                          properties:
+                            network:
+                              $ref: '#/components/schemas/Network'
+                            name:
+                              type: string
+                            symbol:
+                              type: string
+                            decimals:
+                              type: number
+                            tid:
+                              type: string
+                          required:
+                          - network
+                          - decimals
+                      required:
+                      - metadata
+                  targetAsset:
+                    allOf:
+                    - oneOf:
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Native
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                        required:
+                        - kind
+                        - amount
+                        title: Native Asset
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Erc20
+                          contract:
+                            type: string
+                            pattern: ^0x[0-9a-fA-F]{40}$
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                        required:
+                        - kind
+                        - contract
+                        - amount
+                        title: EVM Fungible Token (ERC-20)
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Spl
+                          mint:
+                            type: string
+                            pattern: ^[1-9A-HJ-NP-Za-km-z]{32,44}$
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                        required:
+                        - kind
+                        - mint
+                        - amount
+                        title: Solana Fungible Token (SPL)
+                      - type: object
+                        properties:
+                          kind:
+                            type: string
+                            enum:
+                            - Sep41
+                          issuer:
+                            type: string
+                            pattern: ^(G[A-Z0-9]{55}|M[A-Z0-9]{68})$
+                          assetCode:
+                            type: string
+                          amount:
+                            type: string
+                            pattern: ^\d+$
+                        required:
+                        - kind
+                        - issuer
+                        - assetCode
+                        - amount
+                        title: Stellar Fungible Token (SEP-41)
+                    - type: object
+                      properties:
+                        metadata:
+                          type: object
+                          properties:
+                            network:
+                              $ref: '#/components/schemas/Network'
+                            name:
+                              type: string
+                            symbol:
+                              type: string
+                            decimals:
+                              type: number
+                            tid:
+                              type: string
+                          required:
+                          - network
+                          - decimals
+                      required:
+                      - metadata
+                    description: Expected output at current market price.
+                  estFillTime:
+                    type: integer
+                    description: Estimated fill time in seconds.
+                  dateCreated:
+                    type: string
+                    format: date-time
+                    description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). When the quote was created.'
+                    example: 2023-04-14 20:41:28.715000+00:00
+                required:
+                - walletId
+                - protocol
+                - kind
+                - sourceAsset
+                - targetAsset
+                - estFillTime
+                - dateCreated
+                description: A 0fns conversion price quote.
+  /allocations:
+    post:
+      operationId: createAllocation
+      summary: Create Allocation
+      tags:
+      - Allocations
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: 'Create a new allocation.
+
+
+        An allocation deposits assets from one of your wallets into a rewards-earning protocol. Two providers are available:
+
+
+        | Provider | Description | Supported chains |
+
+        |-----------|---------------------------------------------------------------------------------------------------------------------------------|------------------------------------|
+
+        | M0 | Offers the `0fns` protocol, an extension to the M0 USD-based stablecoin $M. Trade USDC on Ethereum into 0fns to earn rewards. | Ethereum Mainnet, Ethereum Sepolia |
+
+        | Yield.xyz | Offers a set of DeFi vault strategies, each with its own APY. Deposit the vault''s underlying token; withdraw it at any time. | Ethereum Mainnet, Base |
+
+
+        The `protocol` field selects the strategy:
+
+
+        | `protocol` | Provider | Strategy | Deposit asset | Network |
+
+        |---------------------------|-----------|-----------------------------------|---------------|----------|
+
+        | `0fns` | M0 | 0fns | USDC | Ethereum |
+
+        | `SkySusds` | Yield.xyz | Sky Savings Rate (sUSDS) | USDS | Ethereum |
+
+        | `GauntletUsdcPrime` | Yield.xyz | Gauntlet USDC Prime (gtUSDC) | USDC | Ethereum |
+
+        | `SteakhouseUsdt` | Yield.xyz | Steakhouse USDT (steakUSDT) | USDT | Ethereum |
+
+        | `GauntletUsdcPrimeBase` | Yield.xyz | Gauntlet USDC Prime (gtUSDCp) | USDC | Base |
+
+        | `SteakhouseUsdcBase` | Yield.xyz | Steakhouse USDC (steakUSDC) | USDC | Base |
+
+        | `SentoraPyusdMain` | Yield.xyz | Sentora PYUSD Main (senPYUSDMain) | PYUSD | Ethereum |
+
+
+        Yield.xyz vaults are available on mainnet networks only.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Allocations:Create`: Always required   \n`Wallets:Transactions:Create`: Always required. Allocation transactions are broadcast from your wallet.   \n`FeeSponsors:Use`: Required if `feeSponsorId` is specified and the sponsoree wallet belongs to an `EndUser` user kind."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Wallet id.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  protocol:
+                    type: string
+                    enum:
+                    - 0fns
+                    description: Ofns protocol
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  provider:
+                    type: string
+                    enum:
+                    - M0
+                    - Yield.xyz
+                    description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                  sourceAsset:
+                    type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                        - Erc20
+                      contract:
+                        type: string
+                        pattern: ^0x[0-9a-fA-F]{40}$
+                      amount:
+                        type: string
+                        pattern: ^\d+$
+                    required:
+                    - kind
+                    - contract
+                    - amount
+                    description: Source asset and amount to spend (the stablecoin for a deposit).
+                    title: EVM Fungible Token (ERC-20)
+                  targetAsset:
+                    type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                        - Erc20
+                      contract:
+                        type: string
+                        pattern: ^0x[0-9a-fA-F]{40}$
+                      amount:
+                        type: string
+                        pattern: ^\d+$
+                    required:
+                    - kind
+                    - contract
+                    - amount
+                    description: Target asset (0fns) and the minimum amount you will accept.
+                    title: EVM Fungible Token (ERC-20)
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - walletId
+                - protocol
+                - sourceAsset
+                - targetAsset
+                description: Request body for creating a 0fns allocation from a previously obtained quote.
+                title: 0fns Allocation Request
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Wallet id.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  protocol:
+                    type: string
+                    enum:
+                    - SkySusds
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  provider:
+                    type: string
+                    enum:
+                    - M0
+                    - Yield.xyz
+                    description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: USDS amount in smallest unit, e.g. "1000000000000000000" = 1 USDS
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - walletId
+                - protocol
+                - amount
+                description: Request body for creating an allocation of USDS into the Sky Savings Rate (sUSDS) vault on Ethereum, provided by Yield.xyz.
+                title: Sky sUSDS Allocation Request
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Wallet id.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  protocol:
+                    type: string
+                    enum:
+                    - GauntletUsdcPrime
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  provider:
+                    type: string
+                    enum:
+                    - M0
+                    - Yield.xyz
+                    description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: USDC amount in smallest unit, e.g. "1000000" = 1 USDC
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - walletId
+                - protocol
+                - amount
+                description: Request body for creating an allocation of USDC into the Gauntlet USDC Prime (gtUSDC) vault on Ethereum, provided by Yield.xyz.
+                title: Gauntlet gtUSDC Allocation Request
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Wallet id.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  protocol:
+                    type: string
+                    enum:
+                    - SteakhouseUsdt
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  provider:
+                    type: string
+                    enum:
+                    - M0
+                    - Yield.xyz
+                    description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: USDT amount in smallest unit, e.g. "1000000" = 1 USDT
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - walletId
+                - protocol
+                - amount
+                description: Request body for creating an allocation of USDT into the Steakhouse USDT (steakUSDT) vault on Ethereum, provided by Yield.xyz.
+                title: Steakhouse USDT Allocation Request
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Wallet id.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  protocol:
+                    type: string
+                    enum:
+                    - GauntletUsdcPrimeBase
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  provider:
+                    type: string
+                    enum:
+                    - M0
+                    - Yield.xyz
+                    description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: USDC amount in smallest unit, e.g. "1000000" = 1 USDC
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - walletId
+                - protocol
+                - amount
+                description: Request body for creating an allocation of USDC into the Gauntlet USDC Prime (gtUSDCp) vault on Base, provided by Yield.xyz.
+                title: Gauntlet USDC Prime (Base) Allocation Request
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Wallet id.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  protocol:
+                    type: string
+                    enum:
+                    - SteakhouseUsdcBase
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  provider:
+                    type: string
+                    enum:
+                    - M0
+                    - Yield.xyz
+                    description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: USDC amount in smallest unit, e.g. "1000000" = 1 USDC
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - walletId
+                - protocol
+                - amount
+                description: Request body for creating an allocation of USDC into the Steakhouse USDC (steakUSDC) vault on Base, provided by Yield.xyz.
+                title: Steakhouse USDC (Base) Allocation Request
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Wallet id.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  protocol:
+                    type: string
+                    enum:
+                    - SentoraPyusdMain
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  provider:
+                    type: string
+                    enum:
+                    - M0
+                    - Yield.xyz
+                    description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: PYUSD amount in smallest unit, e.g. "1000000" = 1 PYUSD
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - walletId
+                - protocol
+                - amount
+                description: Request body for creating an allocation of PYUSD into the Sentora PYUSD Main (senPYUSDMain) vault on Ethereum, provided by Yield.xyz.
+                title: Sentora PYUSD Main Allocation Request
+              description: Request body for creating an allocation investment.
+            examples:
+              Ofns:
+                value:
+                  externalId: ext-123
+                  walletId: wa-4g991-s29to-9hrq4nbuto6ih33b
+                  protocol: 0fns
+                  sourceAsset:
+                    kind: Erc20
+                    contract: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+                    amount: '1000000'
+                  targetAsset:
+                    kind: Erc20
+                    contract: '0x64df20A1814a6DD0F3d6f0A14073c47214c53f58'
+                    amount: '990000'
+              GauntletUsdcPrime:
+                value:
+                  externalId: ext-456
+                  walletId: wa-4g991-s29to-9hrq4nbuto6ih33b
+                  protocol: GauntletUsdcPrime
+                  provider: Yield.xyz
+                  amount: '1000000000'
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Allocation'
+                - type: object
+                  properties:
+                    actions:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AllocationAction'
+                  required:
+                  - actions
+                description: A allocation investment representing funds deposited to earn interest from a DeFi protocol.
+    get:
+      operationId: listAllocations
+      summary: List Allocations
+      tags:
+      - Allocations
+      security:
+      - authenticationToken: []
+      description: Lists the allocations of your organization.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Allocations:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Allocation'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /allocations/{allocationId}/actions:
+    post:
+      operationId: createAllocationAction
+      summary: Create Allocation Action
+      tags:
+      - Allocations
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Create a new action for an existing allocation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Allocations:Update`: Always required   \n`Wallets:Transactions:Create`: Always required. Allocation transactions are broadcast from your wallet.   \n`FeeSponsors:Use`: Required if `feeSponsorId` is specified and the sponsoree wallet belongs to an `EndUser` user kind."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Unique identifier for the allocation investment.
+        required: true
+        description: Unique identifier for the allocation investment.
+        name: allocationId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              anyOf:
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                    - Deposit
+                    - Withdraw
+                    description: 'The type of action being performed on the allocation investment: Deposit to add funds or Withdraw to remove funds.'
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  sourceAsset:
+                    type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                        - Erc20
+                      contract:
+                        type: string
+                        pattern: ^0x[0-9a-fA-F]{40}$
+                      amount:
+                        type: string
+                        pattern: ^\d+$
+                    required:
+                    - kind
+                    - contract
+                    - amount
+                    description: Source asset and amount to spend (stablecoin for Deposit, 0fns for Withdraw).
+                    title: EVM Fungible Token (ERC-20)
+                  targetAsset:
+                    type: object
+                    properties:
+                      kind:
+                        type: string
+                        enum:
+                        - Erc20
+                      contract:
+                        type: string
+                        pattern: ^0x[0-9a-fA-F]{40}$
+                      amount:
+                        type: string
+                        pattern: ^\d+$
+                    required:
+                    - kind
+                    - contract
+                    - amount
+                    description: Target asset and the minimum amount you will accept (0fns for Deposit, stablecoin for Withdraw).
+                    title: EVM Fungible Token (ERC-20)
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - kind
+                - sourceAsset
+                - targetAsset
+                description: Request body for a 0fns allocation action (deposit or withdrawal) from a quote.
+                title: 0fns Allocation Action Request
+              - type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                    - Deposit
+                    - Withdraw
+                    description: 'The type of action being performed on the allocation investment: Deposit to add funds or Withdraw to remove funds.'
+                  externalId:
+                    type: string
+                    description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                    description: Underlying token amount in smallest unit, e.g. "1000000" = 1 USDC. Applies to both deposits and withdrawals.
+                  feeSponsorId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                    example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+                required:
+                - kind
+                - amount
+                description: Request body for creating an allocation action (deposit or withdrawal) for a Yield.xyz vault allocation. The amount is expressed in the underlying token of the vault (e.g. USDC for Gauntlet USDC Prime).
+                title: Yield.xyz Vault Allocation Action Request
+              description: Request body for creating an allocation action.
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Allocation'
+                - type: object
+                  properties:
+                    actions:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AllocationAction'
+                  required:
+                  - actions
+                description: A allocation investment representing funds deposited to earn interest from a DeFi protocol.
+    get:
+      operationId: listAllocationActions
+      summary: List Allocation Actions
+      tags:
+      - Allocations
+      security:
+      - authenticationToken: []
+      description: Retrieve the list of actions for a specific allocation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Allocations:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Unique identifier for the allocation investment.
+        required: true
+        description: Unique identifier for the allocation investment.
+        name: allocationId
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/AllocationAction'
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /allocations/{allocationId}:
+    get:
+      operationId: getAllocation
+      summary: Get Allocation
+      tags:
+      - Allocations
+      security:
+      - authenticationToken: []
+      description: Retrieve the details of a specific allocation.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Allocations:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Unique identifier for the allocation investment.
+        required: true
+        description: Unique identifier for the allocation investment.
+        name: allocationId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                allOf:
+                - $ref: '#/components/schemas/Allocation'
+                - type: object
+                  properties:
+                    actions:
+                      type: array
+                      items:
+                        $ref: '#/components/schemas/AllocationAction'
+                  required:
+                  - actions
+                description: A allocation investment representing funds deposited to earn interest from a DeFi protocol.
+  /allocations/info:
+    get:
+      operationId: getAllocationsInfo
+      summary: Get Allocations Info
+      tags:
+      - Allocations
+      security:
+      - authenticationToken: []
+      description: Retrieve the current reward rate (APY) for each supported allocation protocol.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Allocations:Read`: Always required."
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  0fns:
+                    type: object
+                    properties:
+                      rewardsRate:
+                        type: number
+                    required:
+                    - rewardsRate
+                  SkySusds:
+                    type: object
+                    properties:
+                      rewardsRate:
+                        type: number
+                    required:
+                    - rewardsRate
+                  GauntletUsdcPrime:
+                    type: object
+                    properties:
+                      rewardsRate:
+                        type: number
+                    required:
+                    - rewardsRate
+                  SteakhouseUsdt:
+                    type: object
+                    properties:
+                      rewardsRate:
+                        type: number
+                    required:
+                    - rewardsRate
+                  GauntletUsdcPrimeBase:
+                    type: object
+                    properties:
+                      rewardsRate:
+                        type: number
+                    required:
+                    - rewardsRate
+                  SteakhouseUsdcBase:
+                    type: object
+                    properties:
+                      rewardsRate:
+                        type: number
+                    required:
+                    - rewardsRate
+                  SentoraPyusdMain:
+                    type: object
+                    properties:
+                      rewardsRate:
+                        type: number
+                    required:
+                    - rewardsRate
+  /allocations/cancel-0fns-order-placement:
+    post:
+      operationId: cancel0fnsOrderPlacement
+      summary: Cancel an unfilled 0fns order placement
+      tags:
+      - Allocations
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Craft and broadcast an on-chain cancelOrder to cancel a 0fns OrderBook order placement that was not filled, reclaiming its escrow. The escrowed input token is returned to the wallet that funded the order.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Allocations:Update`: Always required   \n`Wallets:Transactions:Create`: Always required. The cancellation (cancelOrder) is broadcast from your wallet.   \n`FeeSponsors:Use`: Required if `feeSponsorId` is specified and the sponsoree wallet belongs to an `EndUser` user kind."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                allocationActionId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^allctn-a-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: The 0fns allocation action whose unfilled OrderBook order placement should be cancelled.
+                  example: allctn-a-04p5n-gkkgd-5qk71nuev5n2ug1t
+                externalId:
+                  type: string
+                  description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                feeSponsorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                  example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+              required:
+              - allocationActionId
+              description: Cancel an unfilled 0fns OrderBook order placement and reclaim its escrow to the funding wallet.
+              title: 0fns Order Placement Cancellation Request
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transactionId:
+                    type: string
+                    description: Id of the broadcast on-chain cancelOrder transaction.
+                required:
+                - transactionId
+                description: The broadcast 0fns order-placement cancellation transaction.
+components:
+  schemas:
+    Requester:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^us-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User id.
+          example: us-6b58p-r53sr-rlrd3l5cj3uc4ome
+        tokenId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^to-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Token id.
+          example: to-202a0-cdo33-o65mbt6q758lvvnt
+      required:
+      - userId
+      description: The user who initiated the request.
+    Network:
+      type: string
+      title: Network
+      enum:
+      - Algorand
+      - AlgorandTestnet
+      - Aptos
+      - AptosTestnet
+      - ArbitrumOne
+      - ArbitrumSepolia
+      - Arc
+      - ArcTestnet
+      - Areum
+      - AvalancheC
+      - AvalancheCFuji
+      - Base
+      - BaseSepolia
+      - Berachain
+      - BerachainBepolia
+      - Bitcoin
+      - BitcoinSignet
+      - BitcoinTestnet4
+      - BitcoinCash
+      - Bob
+      - BobSepolia
+      - Bsc
+      - BscTestnet
+      - Canton
+      - CantonTestnet
+      - Cardano
+      - CardanoPreprod
+      - Concordium
+      - ConcordiumTestnet
+      - Celo
+      - CeloSepolia
+      - Codex
+      - CodexSepolia
+      - CosmosHub4
+      - CosmosIcsTestnet
+      - Dogecoin
+      - DogecoinTestnet
+      - Ethereum
+      - EthereumClassic
+      - EthereumClassicMordor
+      - EthereumSepolia
+      - EthereumHoodi
+      - FlareC
+      - FlareCCoston2
+      - FlowEvm
+      - FlowEvmTestnet
+      - Hedera
+      - HederaTestnet
+      - Ink
+      - InkSepolia
+      - InternetComputer
+      - Ion
+      - IonTestnet
+      - Iota
+      - IotaTestnet
+      - Kusama
+      - KusamaAssetHub
+      - Litecoin
+      - LitecoinTestnet
+      - Monad
+      - MonadTestnet
+      - Movement
+      - MovementTestnet
+      - Near
+      - NearTestnet
+      - Optimism
+      - OptimismSepolia
+      - Origyn
+      - Plasma
+      - PlasmaTestnet
+      - Plume
+      - PlumeSepolia
+      - Paseo
+      - PaseoAssetHub
+      - Polkadot
+      - PolkadotAssetHub
+      - Polygon
+      - PolygonAmoy
+      - Polymesh
+      - PolymeshTestnet
+      - Rayls
+      - RaylsTestnet
+      - Robinhood
+      - RobinhoodSepolia
+      - SeiAtlantic2
+      - SeiPacific1
+      - Solana
+      - SolanaDevnet
+      - Sonic
+      - SonicTestnet
+      - Starknet
+      - StarknetSepolia
+      - Stellar
+      - StellarTestnet
+      - Sui
+      - SuiTestnet
+      - Tezos
+      - TezosShadownet
+      - Tempo
+      - TempoModerato
+      - Tsc
+      - TscTestnet1
+      - Ton
+      - TonTestnet
+      - Tron
+      - TronNile
+      - Westend
+      - WestendAssetHub
+      - Xdc
+      - XdcApothem
+      - XLayer
+      - XLayerSepolia
+      - XrpLedger
+      - XrpLedgerTestnet
+    Allocation:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^allctn-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Unique identifier for the allocation investment.
+          example: allctn-7mnn0-rltpq-9bvps60gjm09td0j
+        walletId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Wallet id.
+          example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+        protocol:
+          type: string
+          enum:
+          - 0fns
+          - SkySusds
+          - GauntletUsdcPrime
+          - SteakhouseUsdt
+          - GauntletUsdcPrimeBase
+          - SteakhouseUsdcBase
+          - SentoraPyusdMain
+          description: The DeFi protocol used for allocation generation. See [Create Allocation](https://docs.dfns.co/api-reference/allocations/create-allocation) for each protocol's provider, deposit asset, and network.
+        provider:
+          type: string
+          enum:
+          - M0
+          - Yield.xyz
+          description: The provider handling this allocation.
+        amount:
+          allOf:
+          - oneOf:
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Native
+                amount:
+                  type: string
+                  pattern: ^\d+$
+              required:
+              - kind
+              - amount
+              title: Native Asset
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Erc20
+                contract:
+                  type: string
+                  pattern: ^0x[0-9a-fA-F]{40}$
+                amount:
+                  type: string
+                  pattern: ^\d+$
+              required:
+              - kind
+              - contract
+              - amount
+              title: EVM Fungible Token (ERC-20)
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Spl
+                mint:
+                  type: string
+                  pattern: ^[1-9A-HJ-NP-Za-km-z]{32,44}$
+                amount:
+                  type: string
+                  pattern: ^\d+$
+              required:
+              - kind
+              - mint
+              - amount
+              title: Solana Fungible Token (SPL)
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Sep41
+                issuer:
+                  type: string
+                  pattern: ^(G[A-Z0-9]{55}|M[A-Z0-9]{68})$
+                assetCode:
+                  type: string
+                amount:
+                  type: string
+                  pattern: ^\d+$
+              required:
+              - kind
+              - issuer
+              - assetCode
+              - amount
+              title: Stellar Fungible Token (SEP-41)
+          - type: object
+            properties:
+              metadata:
+                type: object
+                properties:
+                  network:
+                    $ref: '#/components/schemas/Network'
+                  name:
+                    type: string
+                  symbol:
+                    type: string
+                  decimals:
+                    type: number
+                  tid:
+                    type: string
+                required:
+                - network
+                - decimals
+            required:
+            - metadata
+          description: The total amount currently invested in this allocation.
+        rewards:
+          allOf:
+          - oneOf:
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Native
+                amount:
+                  type: string
+                  pattern: ^\d+$
+              required:
+              - kind
+              - amount
+              title: Native Asset
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Erc20
+                contract:
+                  type: string
+                  pattern: ^0x[0-9a-fA-F]{40}$
+                amount:
+                  type: string
+                  pattern: ^\d+$
+              required:
+              - kind
+              - contract
+              - amount
+              title: EVM Fungible Token (ERC-20)
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Spl
+                mint:
+                  type: string
+                  pattern: ^[1-9A-HJ-NP-Za-km-z]{32,44}$
+                amount:
+                  type: string
+                  pattern: ^\d+$
+              required:
+              - kind
+              - mint
+              - amount
+              title: Solana Fungible Token (SPL)
+            - type: object
+              properties:
+                kind:
+                  type: string
+                  enum:
+                  - Sep41
+                issuer:
+                  type: string
+                  pattern: ^(G[A-Z0-9]{55}|M[A-Z0-9]{68})$
+                assetCode:
+                  type: string
+                amount:
+                  type: string
+                  pattern: ^\d+$
+              required:
+              - kind
+              - issuer
+              - assetCode
+              - amount
+              title: Stellar Fungible Token (SEP-41)
+          - type: object
+            properties:
+              metadata:
+                type: object
+                properties:
+                  network:
+                    $ref: '#/components/schemas/Network'
+                  name:
+                    type: string
+                  symbol:
+                    type: string
+                  decimals:
+                    type: number
+                  tid:
+                    type: string
+                required:
+                - network
+                - decimals
+            required:
+            - metadata
+          description: The total rewards earned so far in this allocation.
+        dateCreated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date. When the allocation was created.'
+          example: 2023-04-14 20:41:28.715000+00:00
+      required:
+      - id
+      - walletId
+      - protocol
+      - amount
+      - rewards
+      - dateCreated
+      description: A allocation investment representing funds deposited to earn interest from a DeFi protocol.
+      example:
+        id: allctn-6a3ku-bn8d7-8u5rs1oukojms7k8
+        walletId: wa-3l3cj-l8mq7-8q78f9nopq7f1qjv
+        protocol: 0fns
+        provider: M0
+        amount:
+          kind: Erc20
+          contract: '0x0A7660979A67E4bC51E750C628C8479ff9F458aE'
+          amount: '1000000000'
+          metadata:
+            network: EthereumSepolia
+            name: 0fns
+            symbol: 0fnsSepolia
+            decimals: 6
+            tid: erc20:0x0A7660979A67E4bC51E750C628C8479ff9F458aE
+        rewards:
+          kind: Erc20
+          contract: '0x0A7660979A67E4bC51E750C628C8479ff9F458aE'
+          amount: '5000000'
+          metadata:
+            network: EthereumSepolia
+            name: 0fns
+            symbol: 0fnsSepolia
+            decimals: 6
+            tid: erc20:0x0A7660979A67E4bC51E750C628C9479ff9F458aE
+        dateCreated: 2025-10-09 10:57:55.758000+00:00
+    AllocationAction:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^allctn-a-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Unique identifier for the allocation action.
+          example: allctn-a-04p5n-gkkgd-5qk71nuev5n2ug1t
+        allocationId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^allctn-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Unique identifier for the allocation investment.
+          example: allctn-7mnn0-rltpq-9bvps60gjm09td0j
+        externalId:
+          type: string
+          description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+        kind:
+          type: string
+          enum:
+          - Deposit
+          - Withdraw
+          description: 'The type of action being performed on the allocation investment: Deposit to add funds or Withdraw to remove funds.'
+        status:
+          type: string
+          enum:
+          - PendingPolicyApproval
+          - InProgress
+          - Completed
+          - Failed
+          - Rejected
+          description: Status of the allocation action. Once initiated, the status will be InProgress, after processing it will be Completed or Failed.
+        requester:
+          $ref: '#/components/schemas/Requester'
+        requestBody:
+          anyOf:
+          - type: object
+            properties:
+              kind:
+                type: string
+                enum:
+                - Deposit
+                - Withdraw
+                description: 'The type of action being performed on the allocation investment: Deposit to add funds or Withdraw to remove funds.'
+              externalId:
+                type: string
+                description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+              sourceAsset:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                    - Erc20
+                  contract:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]{40}$
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                required:
+                - kind
+                - contract
+                - amount
+                description: Source asset and amount to spend (stablecoin for Deposit, 0fns for Withdraw).
+                title: EVM Fungible Token (ERC-20)
+              targetAsset:
+                type: object
+                properties:
+                  kind:
+                    type: string
+                    enum:
+                    - Erc20
+                  contract:
+                    type: string
+                    pattern: ^0x[0-9a-fA-F]{40}$
+                  amount:
+                    type: string
+                    pattern: ^\d+$
+                required:
+                - kind
+                - contract
+                - amount
+                description: Target asset and the minimum amount you will accept (0fns for Deposit, stablecoin for Withdraw).
+                title: EVM Fungible Token (ERC-20)
+              feeSponsorId:
+                type: string
+                minLength: 1
+                maxLength: 64
+                pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+            required:
+            - kind
+            - sourceAsset
+            - targetAsset
+            description: Request body for a 0fns allocation action (deposit or withdrawal) from a quote.
+            title: 0fns Allocation Action Request
+          - type: object
+            properties:
+              kind:
+                type: string
+                enum:
+                - Deposit
+                - Withdraw
+                description: 'The type of action being performed on the allocation investment: Deposit to add funds or Withdraw to remove funds.'
+              externalId:
+                type: string
+                description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+              amount:
+                type: string
+                pattern: ^\d+$
+                description: Underlying token amount in smallest unit, e.g. "1000000" = 1 USDC. Applies to both deposits and withdrawals.
+              feeSponsorId:
+                type: string
+                minLength: 1
+                maxLength: 64
+                pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+            required:
+            - kind
+            - amount
+            description: Request body for creating an allocation action (deposit or withdrawal) for a Yield.xyz vault allocation. The amount is expressed in the underlying token of the vault (e.g. USDC for Gauntlet USDC Prime).
+            title: Yield.xyz Vault Allocation Action Request
+          - oneOf:
+            - type: object
+              properties:
+                walletId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Wallet id.
+                  example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                protocol:
+                  type: string
+                  enum:
+                  - 0fns
+                  description: Ofns protocol
+                externalId:
+                  type: string
+                  description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                provider:
+                  type: string
+                  enum:
+                  - M0
+                  - Yield.xyz
+                  description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                sourceAsset:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - Erc20
+                    contract:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{40}$
+                    amount:
+                      type: string
+                      pattern: ^\d+$
+                  required:
+                  - kind
+                  - contract
+                  - amount
+                  description: Source asset and amount to spend (the stablecoin for a deposit).
+                  title: EVM Fungible Token (ERC-20)
+                targetAsset:
+                  type: object
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - Erc20
+                    contract:
+                      type: string
+                      pattern: ^0x[0-9a-fA-F]{40}$
+                    amount:
+                      type: string
+                      pattern: ^\d+$
+                  required:
+                  - kind
+                  - contract
+                  - amount
+                  description: Target asset (0fns) and the minimum amount you will accept.
+                  title: EVM Fungible Token (ERC-20)
+                feeSponsorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                  example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+              required:
+              - walletId
+              - protocol
+              - sourceAsset
+              - targetAsset
+              description: Request body for creating a 0fns allocation from a previously obtained quote.
+              title: 0fns Allocation Request
+            - type: object
+              properties:
+                walletId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Wallet id.
+                  example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                protocol:
+                  type: string
+                  enum:
+                  - SkySusds
+                externalId:
+                  type: string
+                  description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                provider:
+                  type: string
+                  enum:
+                  - M0
+                  - Yield.xyz
+                  description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                amount:
+                  type: string
+                  pattern: ^\d+$
+                  description: USDS amount in smallest unit, e.g. "1000000000000000000" = 1 USDS
+                feeSponsorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                  example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+              required:
+              - walletId
+              - protocol
+              - amount
+              description: Request body for creating an allocation of USDS into the Sky Savings Rate (sUSDS) vault on Ethereum, provided by Yield.xyz.
+              title: Sky sUSDS Allocation Request
+            - type: object
+              properties:
+                walletId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Wallet id.
+                  example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                protocol:
+                  type: string
+                  enum:
+                  - GauntletUsdcPrime
+                externalId:
+                  type: string
+                  description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                provider:
+                  type: string
+                  enum:
+                  - M0
+                  - Yield.xyz
+                  description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                amount:
+                  type: string
+                  pattern: ^\d+$
+                  description: USDC amount in smallest unit, e.g. "1000000" = 1 USDC
+                feeSponsorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                  example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+              required:
+              - walletId
+              - protocol
+              - amount
+              description: Request body for creating an allocation of USDC into the Gauntlet USDC Prime (gtUSDC) vault on Ethereum, provided by Yield.xyz.
+              title: Gauntlet gtUSDC Allocation Request
+            - type: object
+              properties:
+                walletId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Wallet id.
+                  example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                protocol:
+                  type: string
+                  enum:
+                  - SteakhouseUsdt
+                externalId:
+                  type: string
+                  description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                provider:
+                  type: string
+                  enum:
+                  - M0
+                  - Yield.xyz
+                  description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                amount:
+                  type: string
+                  pattern: ^\d+$
+                  description: USDT amount in smallest unit, e.g. "1000000" = 1 USDT
+                feeSponsorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                  example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+              required:
+              - walletId
+              - protocol
+              - amount
+              description: Request body for creating an allocation of USDT into the Steakhouse USDT (steakUSDT) vault on Ethereum, provided by Yield.xyz.
+              title: Steakhouse USDT Allocation Request
+            - type: object
+              properties:
+                walletId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Wallet id.
+                  example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                protocol:
+                  type: string
+                  enum:
+                  - GauntletUsdcPrimeBase
+                externalId:
+                  type: string
+                  description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                provider:
+                  type: string
+                  enum:
+                  - M0
+                  - Yield.xyz
+                  description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                amount:
+                  type: string
+                  pattern: ^\d+$
+                  description: USDC amount in smallest unit, e.g. "1000000" = 1 USDC
+                feeSponsorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                  example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+              required:
+              - walletId
+              - protocol
+              - amount
+              description: Request body for creating an allocation of USDC into the Gauntlet USDC Prime (gtUSDCp) vault on Base, provided by Yield.xyz.
+              title: Gauntlet USDC Prime (Base) Allocation Request
+            - type: object
+              properties:
+                walletId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Wallet id.
+                  example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                protocol:
+                  type: string
+                  enum:
+                  - SteakhouseUsdcBase
+                externalId:
+                  type: string
+                  description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                provider:
+                  type: string
+                  enum:
+                  - M0
+                  - Yield.xyz
+                  description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                amount:
+                  type: string
+                  pattern: ^\d+$
+                  description: USDC amount in smallest unit, e.g. "1000000" = 1 USDC
+                feeSponsorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                  example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+              required:
+              - walletId
+              - protocol
+              - amount
+              description: Request body for creating an allocation of USDC into the Steakhouse USDC (steakUSDC) vault on Base, provided by Yield.xyz.
+              title: Steakhouse USDC (Base) Allocation Request
+            - type: object
+              properties:
+                walletId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Wallet id.
+                  example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                protocol:
+                  type: string
+                  enum:
+                  - SentoraPyusdMain
+                externalId:
+                  type: string
+                  description: An optional external identifier provided by the client to ensure idempotency and prevent duplicate operations.
+                provider:
+                  type: string
+                  enum:
+                  - M0
+                  - Yield.xyz
+                  description: The provider handling this allocation. `M0` offers the 0fns protocol; `Yield.xyz` offers vault strategies on Ethereum and Base.
+                amount:
+                  type: string
+                  pattern: ^\d+$
+                  description: PYUSD amount in smallest unit, e.g. "1000000" = 1 PYUSD
+                feeSponsorId:
+                  type: string
+                  minLength: 1
+                  maxLength: 64
+                  pattern: ^fs-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                  description: Id of the fee sponsor that will pay the network fees for this allocation. When set, allocation transactions are broadcast as sponsored user operations.
+                  example: fs-5vqdl-gliqk-b4rfukqauov1sp7j
+              required:
+              - walletId
+              - protocol
+              - amount
+              description: Request body for creating an allocation of PYUSD into the Sentora PYUSD Main (senPYUSDMain) vault on Ethereum, provided by Yield.xyz.
+              title: Sentora PYUSD Main Allocation Request
+            description: Request body for creating an allocation investment.
+          description: The full request used for initiating this allocation action.
+        failureReason:
+          type: string
+          description: The failure reason, if any. Only present when status is Failed.
+        dateCreated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date. When the allocation action was created.'
+          example: 2023-04-14 20:41:28.715000+00:00
+      required:
+      - id
+      - allocationId
+      - kind
+      - status
+      - requester
+      - requestBody
+      - dateCreated
+      description: A specific action performed on a allocation investment, such as depositing or withdrawing funds.
+      example:
+        id: allctn-a-6a3ku-bn8d7-8u5rs1oukojms7k8
+        allocationId: allctn-6a3ku-bn8d7-8u5rs1oukojms7k8
+        externalId: external-action-123
+        kind: Deposit
+        status: InProgress
+        requester:
+          userId: us-3v1ag-v6b36-afhm4zy59kjrn1fds
+          tokenId: ut-341e5-12nj6-9a82ld2hjxqzkpji
+        requestBody:
+          kind: Deposit
+          sourceAsset:
+            kind: Erc20
+            contract: '0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48'
+            amount: '1000000'
+          targetAsset:
+            kind: Erc20
+            contract: '0x64df20A1814a6DD0F3d6f0A14073c47214c53f58'
+            amount: '990000'
+        dateCreated: 2025-10-09 11:15:33.421000+00:00
+  securitySchemes:
+    authenticationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

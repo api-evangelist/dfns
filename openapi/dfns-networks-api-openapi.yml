@@ -1,108 +1,1907 @@
 openapi: 3.2.0
 info:
+  version: 2.0.249
   title: Dfns Networks API
-  description: Representative OpenAPI description of the Dfns wallet-as-a-service and MPC key-management REST API.
-  contact:
-    name: Dfns Support
-    url: https://www.dfns.co/
-  termsOfService: https://www.dfns.co/terms-of-service
-  version: '1.0'
 servers:
 - url: https://api.dfns.io
-  description: Dfns production REST API (Europe / default)
+  description: Default - Europe
 - url: https://api.uae.dfns.io
-  description: Dfns production REST API (UAE region)
-security:
-- BearerAuth: []
-  AppId: []
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
 tags:
 - name: Networks
-  description: Network fee estimates and read-only blockchain calls.
 paths:
   /networks/fees:
     get:
-      operationId: getNetworkFees
+      operationId: estimateFees
+      summary: Estimate Fees
       tags:
       - Networks
-      summary: Estimate network fees
-      description: Returns a current fee estimate (e.g. EIP-1559 maxFeePerGas / maxPriorityFeePerGas) for a given blockchain network.
+      security:
+      - authenticationToken: []
+      description: 'Gets real-time fee details for a given network, allowing users to make decisions based on their preferences for transaction speed/priority. Three levels of priority will be displayed: `slow`, `standard`, `fast`.
+
+
+        Legacy (pre-London) EVM networks such as Ethereum Classic do not support EIP-1559 fee estimation and are not listed here. When broadcasting on those networks, omit `priority` and a legacy `gasPrice` is filled automatically.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\nNo permission required."
       parameters:
-      - in: query
-        name: network
-        required: true
-        schema:
+      - schema:
           type: string
+          enum:
+          - Bitcoin
+          - BitcoinSignet
+          - BitcoinTestnet4
+          - Litecoin
+          - LitecoinTestnet
+          - Dogecoin
+          - DogecoinTestnet
+          - ArbitrumOne
+          - ArbitrumSepolia
+          - Arc
+          - ArcTestnet
+          - Areum
+          - AvalancheC
+          - AvalancheCFuji
+          - Base
+          - BaseSepolia
+          - Bob
+          - BobSepolia
+          - Bsc
+          - BscTestnet
+          - Berachain
+          - BerachainBepolia
+          - Celo
+          - CeloSepolia
+          - Codex
+          - CodexSepolia
+          - Ethereum
+          - EthereumSepolia
+          - EthereumHoodi
+          - FlareC
+          - FlareCCoston2
+          - FlowEvm
+          - FlowEvmTestnet
+          - Ink
+          - InkSepolia
+          - Monad
+          - MonadTestnet
+          - Optimism
+          - OptimismSepolia
+          - Plasma
+          - PlasmaTestnet
+          - Plume
+          - PlumeSepolia
+          - Polygon
+          - PolygonAmoy
+          - Rayls
+          - RaylsTestnet
+          - Robinhood
+          - RobinhoodSepolia
+          - SeiPacific1
+          - SeiAtlantic2
+          - Sonic
+          - SonicTestnet
+          - Tempo
+          - TempoModerato
+          - Tsc
+          - TscTestnet1
+          - Xdc
+          - XdcApothem
+          - XLayer
+          - XLayerSepolia
+          - Solana
+          - SolanaDevnet
+        required: true
+        name: network
+        in: query
       responses:
         '200':
-          description: The fee estimate for the network.
+          description: Success
           content:
             application/json:
               schema:
-                type: object
-                properties:
-                  network:
-                    type: string
-                  kind:
-                    type: string
-                  estimatedFees:
-                    type: object
+                oneOf:
+                - type: object
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - Bitcoin
+                    network:
+                      type: string
+                      enum:
+                      - Bitcoin
+                      - BitcoinSignet
+                      - BitcoinTestnet4
+                      - Litecoin
+                      - LitecoinTestnet
+                      - Dogecoin
+                      - DogecoinTestnet
+                    blockNumber:
+                      type: number
+                    slow:
+                      type: object
+                      properties:
+                        feeRate:
+                          type: string
+                          description: Fee rate denominated in satoshis (the lowest denomination) per virtual byte.
+                          example: '12'
+                        blockHorizon:
+                          type: number
+                          description: Target number of blocks within which a transaction at this fee rate is expected to confirm.
+                          example: 2
+                      required:
+                      - feeRate
+                      - blockHorizon
+                    standard:
+                      type: object
+                      properties:
+                        feeRate:
+                          type: string
+                          description: Fee rate denominated in satoshis (the lowest denomination) per virtual byte.
+                          example: '12'
+                        blockHorizon:
+                          type: number
+                          description: Target number of blocks within which a transaction at this fee rate is expected to confirm.
+                          example: 2
+                      required:
+                      - feeRate
+                      - blockHorizon
+                    fast:
+                      type: object
+                      properties:
+                        feeRate:
+                          type: string
+                          description: Fee rate denominated in satoshis (the lowest denomination) per virtual byte.
+                          example: '12'
+                        blockHorizon:
+                          type: number
+                          description: Target number of blocks within which a transaction at this fee rate is expected to confirm.
+                          example: 2
+                      required:
+                      - feeRate
+                      - blockHorizon
+                  required:
+                  - kind
+                  - network
+                  - blockNumber
+                  - slow
+                  - standard
+                  - fast
+                  title: Bitcoin
+                - type: object
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - Eip1559
+                    network:
+                      type: string
+                      enum:
+                      - ArbitrumOne
+                      - ArbitrumSepolia
+                      - Arc
+                      - ArcTestnet
+                      - Areum
+                      - AvalancheC
+                      - AvalancheCFuji
+                      - Base
+                      - BaseSepolia
+                      - Bob
+                      - BobSepolia
+                      - Bsc
+                      - BscTestnet
+                      - Berachain
+                      - BerachainBepolia
+                      - Celo
+                      - CeloSepolia
+                      - Codex
+                      - CodexSepolia
+                      - Ethereum
+                      - EthereumClassic
+                      - EthereumClassicMordor
+                      - EthereumSepolia
+                      - EthereumHoodi
+                      - FlareC
+                      - FlareCCoston2
+                      - FlowEvm
+                      - FlowEvmTestnet
+                      - Ink
+                      - InkSepolia
+                      - Monad
+                      - MonadTestnet
+                      - Optimism
+                      - OptimismSepolia
+                      - Plasma
+                      - PlasmaTestnet
+                      - Plume
+                      - PlumeSepolia
+                      - Polygon
+                      - PolygonAmoy
+                      - Rayls
+                      - RaylsTestnet
+                      - Robinhood
+                      - RobinhoodSepolia
+                      - SeiPacific1
+                      - SeiAtlantic2
+                      - Sonic
+                      - SonicTestnet
+                      - Tempo
+                      - TempoModerato
+                      - Tsc
+                      - TscTestnet1
+                      - Xdc
+                      - XdcApothem
+                      - XLayer
+                      - XLayerSepolia
+                    blockNumber:
+                      type: number
+                    slow:
+                      type: object
+                      properties:
+                        maxPriorityFeePerGas:
+                          type: string
+                          description: Maximum priority fee (tip) per unit of gas, denominated in wei (the lowest denomination).
+                          example: '1500000000'
+                        maxFeePerGas:
+                          type: string
+                          description: Maximum total fee per unit of gas, denominated in wei (the lowest denomination).
+                          example: '1626000000000'
+                      required:
+                      - maxPriorityFeePerGas
+                      - maxFeePerGas
+                    standard:
+                      type: object
+                      properties:
+                        maxPriorityFeePerGas:
+                          type: string
+                          description: Maximum priority fee (tip) per unit of gas, denominated in wei (the lowest denomination).
+                          example: '1500000000'
+                        maxFeePerGas:
+                          type: string
+                          description: Maximum total fee per unit of gas, denominated in wei (the lowest denomination).
+                          example: '1626000000000'
+                      required:
+                      - maxPriorityFeePerGas
+                      - maxFeePerGas
+                    fast:
+                      type: object
+                      properties:
+                        maxPriorityFeePerGas:
+                          type: string
+                          description: Maximum priority fee (tip) per unit of gas, denominated in wei (the lowest denomination).
+                          example: '1500000000'
+                        maxFeePerGas:
+                          type: string
+                          description: Maximum total fee per unit of gas, denominated in wei (the lowest denomination).
+                          example: '1626000000000'
+                      required:
+                      - maxPriorityFeePerGas
+                      - maxFeePerGas
+                    baseFeePerGas:
+                      type: string
+                      description: Base fee per unit of gas of the latest block, denominated in wei (the lowest denomination).
+                      example: '1000000000'
+                  required:
+                  - kind
+                  - network
+                  - blockNumber
+                  - slow
+                  - standard
+                  - fast
+                  - baseFeePerGas
+                  description: 'For EIP-1559, we  provide 2 different fields for each strategy: `maxFee` (per Gas) and `maxPriorityFee` (per Gas). To compute these estimations, we look at the block history, compute three different percentiles for the rewards offered by the transactions in the blocks, and then calculate the average for each strategy.'
+                  title: EVM EIP-1559
+                - type: object
+                  properties:
+                    kind:
+                      type: string
+                      enum:
+                      - Solana
+                    network:
+                      type: string
+                      enum:
+                      - Solana
+                      - SolanaDevnet
+                    blockNumber:
+                      type: number
+                    slow:
+                      type: object
+                      properties:
+                        computeUnitPrice:
+                          type: string
+                          description: Price per compute unit, denominated in micro-lamports (the lowest denomination).
+                          example: '10000'
+                      required:
+                      - computeUnitPrice
+                    standard:
+                      type: object
+                      properties:
+                        computeUnitPrice:
+                          type: string
+                          description: Price per compute unit, denominated in micro-lamports (the lowest denomination).
+                          example: '10000'
+                      required:
+                      - computeUnitPrice
+                    fast:
+                      type: object
+                      properties:
+                        computeUnitPrice:
+                          type: string
+                          description: Price per compute unit, denominated in micro-lamports (the lowest denomination).
+                          example: '10000'
+                      required:
+                      - computeUnitPrice
+                  required:
+                  - kind
+                  - network
+                  - blockNumber
+                  - slow
+                  - standard
+                  - fast
+                  title: Solana
   /networks/{network}/call-function:
     post:
       operationId: callFunction
+      summary: Call Function
       tags:
       - Networks
-      summary: Read from a smart contract (call function)
-      description: Performs a read-only (eth_call style) function call against a contract on a network without creating a transaction.
+      security:
+      - authenticationToken: []
+      description: 'Call a read-only function on a smart contract. In Solidity, these are functions with the state mutability set to `view`.
+
+
+        Currently only works on EVM compatible chains.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n✅ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\nNo permission required."
       parameters:
-      - in: path
-        name: network
-        required: true
-        schema:
+      - schema:
           type: string
+          description: Network name formatted in kebab case
+        required: true
+        description: Network name formatted in kebab case
+        name: network
+        in: path
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required:
-              - kind
-              - contract
-              - data
               properties:
-                kind:
-                  type: string
-                  example: Evm
                 contract:
                   type: string
-                data:
-                  type: string
+                  pattern: ^0x[0-9a-fA-F]{40}$
+                  description: Address of the contract to call
+                abi:
+                  type: object
+                  properties:
+                    type:
+                      type: string
+                    name:
+                      type: string
+                    stateMutability:
+                      type: string
+                    inputs:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          type:
+                            type: string
+                          components:
+                            type: array
+                            items:
+                              type: object
+                        required:
+                        - name
+                        - type
+                    outputs:
+                      type: array
+                      items:
+                        type: object
+                        properties:
+                          name:
+                            type: string
+                          type:
+                            type: string
+                          components:
+                            type: array
+                            items:
+                              type: object
+                        required:
+                        - name
+                        - type
+                  required:
+                  - type
+                  - name
+                  - stateMutability
+                  - inputs
+                  - outputs
+                  description: ABI of the read-only function to invoke
+                calldata:
+                  type: object
+                  properties: {}
+                  description: Function call arguments
+              required:
+              - contract
+              - abi
+              additionalProperties: false
+              description: Calls an on-chain read function.
+              title: Call Function
       responses:
         '200':
-          description: The decoded/raw contract read result.
+          description: Success
+          content:
+            application/json:
+              schema: {}
+  /networks/{network}/validators/{validatorId}:
+    get:
+      operationId: getCantonValidator
+      summary: Get Canton Validator
+      tags:
+      - Networks
+      security:
+      - authenticationToken: []
+      description: Return a configured Canton Validator in your organization.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Networks:Canton:Validators:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - canton
+          - canton-devnet
+          - canton-testnet
+        required: true
+        name: network
+        in: path
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^cv-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: validatorId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CantonValidator'
+    put:
+      operationId: updateCantonValidator
+      summary: Update Canton Validator
+      tags:
+      - Networks
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: 'Update an existing Canton Validator configuration.
+
+
+        Read details about the process here.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Networks:Canton:Validators:Update`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - canton
+          - canton-devnet
+          - canton-testnet
+        required: true
+        name: network
+        in: path
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^cv-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: validatorId
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 1
+                  maxLength: 50
+                  description: Nickname for this validator.
+                validator:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      format: uri
+                      description: URL to reach the API at this address. The calls will be originating from our IP addresses (see [Dfns Environments](https://docs.dfns.co/api-reference/regions))
+                    oauth2:
+                      type: object
+                      properties:
+                        domain:
+                          type: string
+                          format: uri
+                          description: 'your OAuth2 tenant domain. Provided by your auth provider. '
+                        tokenPath:
+                          type: string
+                          description: 'token endpoint from your authorization provider. We will call this endpoint on your tenant domain (i.e.: `<domain>/<token path>`)'
+                        audience:
+                          type: string
+                          description: the audience your configured on your auth provider. It is suggested to start with `https://canton.network.global`.
+                        clientId:
+                          type: string
+                          description: The client id from your auth provider for this application.
+                        clientSecret:
+                          type: string
+                          description: The client secret from your auth provider for this application.
+                      required:
+                      - domain
+                      - audience
+                      - clientId
+                      - clientSecret
+                      description: How Dfns will authenticate into your validator/ledger. You should have setup authentication already (see details [here](https://docs.dev.sync.global/validator_operator/validator_helm.html#helm-validator-auth)), you can reuse the same Application details. See examples in this endpoint payload examples above.
+                  required:
+                  - url
+                  - oauth2
+                ledger:
+                  type: object
+                  properties:
+                    url:
+                      type: string
+                      format: uri
+                      description: URL to reach the API at this address. The calls will be originating from our IP addresses (see [Dfns Environments](https://docs.dfns.co/api-reference/regions))
+                    oauth2:
+                      type: object
+                      properties:
+                        domain:
+                          type: string
+                          format: uri
+                          description: 'your OAuth2 tenant domain. Provided by your auth provider. '
+                        tokenPath:
+                          type: string
+                          description: 'token endpoint from your authorization provider. We will call this endpoint on your tenant domain (i.e.: `<domain>/<token path>`)'
+                        audience:
+                          type: string
+                          description: the audience your configured on your auth provider. It is suggested to start with `https://canton.network.global`.
+                        clientId:
+                          type: string
+                          description: The client id from your auth provider for this application.
+                        clientSecret:
+                          type: string
+                          description: The client secret from your auth provider for this application.
+                      required:
+                      - domain
+                      - audience
+                      - clientId
+                      - clientSecret
+                      description: How Dfns will authenticate into your validator/ledger. You should have setup authentication already (see details [here](https://docs.dev.sync.global/validator_operator/validator_helm.html#helm-validator-auth)), you can reuse the same Application details. See examples in this endpoint payload examples above.
+                  required:
+                  - url
+                  - oauth2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CantonValidator'
+    delete:
+      operationId: deleteCantonValidator
+      summary: Delete Canton Validator
+      tags:
+      - Networks
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Delete a specific Canton Validator configuration.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Networks:Canton:Validators:Delete`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - canton
+          - canton-devnet
+          - canton-testnet
+        required: true
+        name: network
+        in: path
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^cv-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+        required: true
+        name: validatorId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CantonValidator'
+  /networks/{network}/validators:
+    post:
+      operationId: createCantonValidator
+      summary: Create Canton Validator
+      tags:
+      - Networks
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: 'Link a Canton Validator to your organization. This is required in order to create wallets or interact with the Canton network.
+
+
+        The `Shared` option allows you to use a shared validator hosted by Dfns and get started in seconds, while the `Custom` option allows you to connect your own validator and ledger nodes using OAuth2 authentication.
+
+
+        Read details about the process here.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Networks:Canton:Validators:Create`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - canton
+          - canton-devnet
+          - canton-testnet
+        required: true
+        name: network
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  name:
+                    type: string
+                    minLength: 1
+                    maxLength: 50
+                    description: Nickname for this validator.
+                  kind:
+                    type: string
+                    enum:
+                    - Shared
+                required:
+                - kind
+                description: Use Dfns' shared validator to create your Canton Wallets. See [here](https://docs.dfns.co/networks/canton)
+                title: Dfns Shared validator
+              - type: object
+                properties:
+                  name:
+                    type: string
+                    minLength: 1
+                    maxLength: 50
+                    description: Nickname for this validator.
+                  kind:
+                    type: string
+                    enum:
+                    - Custom
+                  validator:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        format: uri
+                        description: URL to reach the API at this address. The calls will be originating from our IP addresses (see [Dfns Environments](https://docs.dfns.co/api-reference/regions))
+                      oauth2:
+                        type: object
+                        properties:
+                          domain:
+                            type: string
+                            format: uri
+                            description: 'your OAuth2 tenant domain. Provided by your auth provider. '
+                          tokenPath:
+                            type: string
+                            description: 'token endpoint from your authorization provider. We will call this endpoint on your tenant domain (i.e.: `<domain>/<token path>`)'
+                          audience:
+                            type: string
+                            description: the audience your configured on your auth provider. It is suggested to start with `https://canton.network.global`.
+                          clientId:
+                            type: string
+                            description: The client id from your auth provider for this application.
+                          clientSecret:
+                            type: string
+                            description: The client secret from your auth provider for this application.
+                        required:
+                        - domain
+                        - audience
+                        - clientId
+                        - clientSecret
+                        description: How Dfns will authenticate into your validator/ledger. You should have setup authentication already (see details [here](https://docs.dev.sync.global/validator_operator/validator_helm.html#helm-validator-auth)), you can reuse the same Application details. See examples in this endpoint payload examples above.
+                    required:
+                    - url
+                    - oauth2
+                    description: Configuration to reach your validator Signing API. We will call the validator External Signing API at the url (and using the credentials) defined below ; for instance `$URL/api/validator/v0/admin/external-party/topology/generate`. See the underlying calls details [here](https://docs.dev.sync.global/app_dev/validator_api/index.html#validator-api-external-signing).
+                  ledger:
+                    type: object
+                    properties:
+                      url:
+                        type: string
+                        format: uri
+                        description: URL to reach the API at this address. The calls will be originating from our IP addresses (see [Dfns Environments](https://docs.dfns.co/api-reference/regions))
+                      oauth2:
+                        type: object
+                        properties:
+                          domain:
+                            type: string
+                            format: uri
+                            description: 'your OAuth2 tenant domain. Provided by your auth provider. '
+                          tokenPath:
+                            type: string
+                            description: 'token endpoint from your authorization provider. We will call this endpoint on your tenant domain (i.e.: `<domain>/<token path>`)'
+                          audience:
+                            type: string
+                            description: the audience your configured on your auth provider. It is suggested to start with `https://canton.network.global`.
+                          clientId:
+                            type: string
+                            description: The client id from your auth provider for this application.
+                          clientSecret:
+                            type: string
+                            description: The client secret from your auth provider for this application.
+                        required:
+                        - domain
+                        - audience
+                        - clientId
+                        - clientSecret
+                        description: How Dfns will authenticate into your validator/ledger. You should have setup authentication already (see details [here](https://docs.dev.sync.global/validator_operator/validator_helm.html#helm-validator-auth)), you can reuse the same Application details. See examples in this endpoint payload examples above.
+                    required:
+                    - url
+                    - oauth2
+                    description: Configuration to reach your validator Ledger JSON API. We will call endpoints such as `/v2/state/ledger-end`, `/v2/state/active-contracts`, `/v2/parties/participant-id`, `/v2/interactive-submission/prepare`, `/v2/interactive-submission/execute`, `/v2/commands/completions`. See the underlying details [here](https://docs.dev.sync.global/app_dev/ledger_api/index.html).
+                required:
+                - kind
+                - validator
+                - ledger
+                description: Connect your own validator. See [here](https://docs.dfns.co/networks/canton) for more info.
+                title: Your own custom validator
+            examples:
+              Shared Validator:
+                value:
+                  kind: Shared
+                  name: My shared validator
+              Custom Validator | Auth0:
+                value:
+                  kind: Custom
+                  name: My validator with auth0 credentials
+                  validator:
+                    url: https://validator.testnet.mydomain.com/
+                    oauth2:
+                      domain: https://xxxxxx.us.auth0.com
+                      clientId: xxxxxx
+                      clientSecret: xxxxxxx
+                      audience: https://canton.network.global
+                  ledger:
+                    url: https://ledger.testnet.mydomain.com/
+                    oauth2:
+                      domain: https://xxxxxx.us.auth0.com
+                      clientId: xxxxxx
+                      clientSecret: xxxxxxx
+                      audience: https://canton.network.global
+              Custom Validator | Okta:
+                value:
+                  kind: Custom
+                  name: My validator with auth0 credentials
+                  validator:
+                    url: https://validator.testnet.mydomain.com/
+                    oauth2:
+                      domain: https://xxxxxx.okta.com
+                      tokenPath: oauth2/xxxxxx/v1/token
+                      clientId: xxxxxx
+                      clientSecret: xxxxxxx
+                      audience: https://validator.testnet.mydomain.com/
+                  ledger:
+                    url: https://ledger.testnet.mydomain.com/
+                    oauth2:
+                      domain: https://xxxxxx.okta.com
+                      tokenPath: oauth2/xxxxxx/v1/token
+                      clientId: xxxxxx
+                      clientSecret: xxxxxxx
+                      audience: https://ledger.testnet.mydomain.com/
+              Custom Validator | Keycloak:
+                value:
+                  kind: Custom
+                  name: My validator with auth0 credentials
+                  validator:
+                    url: https://validator.testnet.mydomain.com/
+                    oauth2:
+                      domain: https://my-own-server.running-keycloak.com
+                      tokenPath: /auth/realms/xxxxx/protocol/openid-connect/token
+                      clientId: xxxxxx
+                      clientSecret: xxxxxxx
+                      audience: https://validator.testnet.mydomain.com/
+                  ledger:
+                    url: https://ledger.testnet.mydomain.com/
+                    oauth2:
+                      domain: https://my-own-server.running-keycloak.com
+                      tokenPath: /auth/realms/xxxxx/protocol/openid-connect/token
+                      clientId: xxxxxx
+                      clientSecret: xxxxxxx
+                      audience: https://ledger.testnet.mydomain.com/
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CantonValidator'
+    get:
+      operationId: listCantonValidators
+      summary: List Canton Validators
+      tags:
+      - Networks
+      security:
+      - authenticationToken: []
+      description: Retrieve the list of configured Canton Validators in your organization.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Networks:Canton:Validators:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - canton
+          - canton-devnet
+          - canton-testnet
+        required: true
+        name: network
+        in: path
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      responses:
+        '200':
+          description: Success
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  kind:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CantonValidator'
+                    description: Current page items.
+                  nextPageToken:
                     type: string
-                  data:
-                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /networks/{network}/transactions/reindex:
+    post:
+      operationId: reindexTransaction
+      summary: Reindex Transaction
+      tags:
+      - Networks
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: 'Re-index a finalized transaction that is missing from your wallets'' history. A transaction that is already indexed is not processed again.
+
+
+        Limited to 10 requests per organization per 10 minutes.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Networks:Transactions:Reindex`: Always required."
+      parameters:
+      - schema:
+          type: string
+          description: Network name formatted in kebab case
+        required: true
+        description: Network name formatted in kebab case
+        name: network
+        in: path
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                txHash:
+                  type: string
+                  minLength: 1
+                  description: Hash of the transaction to re-index
+              required:
+              - txHash
+              additionalProperties: false
+              description: Re-indexes a finalized transaction.
+              title: Reindex Transaction
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    enum:
+                    - true
+                required:
+                - success
 components:
+  schemas:
+    CantonValidator:
+      type: object
+      properties:
+        id:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^cv-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          example: cv-7jeof-m584r-p35ucm37ko3cqgts
+        orgId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^or-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Organization id.
+          example: or-30tnh-itmjs-s235s5ontr3r23h2
+        network:
+          type: string
+          enum:
+          - Canton
+          - CantonDevnet
+          - CantonTestnet
+          description: The Canton network this validator is configured for.
+        name:
+          type: string
+          description: Nickname for this validator.
+        kind:
+          type: string
+          enum:
+          - Shared
+          - Custom
+          description: '`Shared` if using the Dfns-hosted shared validator, `Custom` if connecting your own validator.'
+        dateCreated:
+          type: string
+          format: date-time
+          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). When the validator was linked.'
+          example: 2023-04-14 20:41:28.715000+00:00
+        partyHint:
+          type: string
+          description: Party hint used to derive the Canton party id for wallets created under this validator.
+      required:
+      - id
+      - orgId
+      - network
+      - kind
+      - dateCreated
+      - partyHint
   securitySchemes:
-    BearerAuth:
+    authenticationToken:
       type: http
       scheme: bearer
       bearerFormat: JWT
-      description: 'Access token issued to a service account or a logged-in user. Sent as `Authorization: Bearer <token>`.'
-    AppId:
-      type: apiKey
-      in: header
-      name: X-DFNS-APPID
-      description: The Dfns application (app) id the request is made on behalf of.
-    UserAction:
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
       type: apiKey
       in: header
       name: X-DFNS-USERACTION
-      description: A User Action Signature token proving the caller cryptographically signed the request payload. Required on sensitive mutating operations (transfers, signature generation, key/policy/permission changes).
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null

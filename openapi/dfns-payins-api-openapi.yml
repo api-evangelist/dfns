@@ -1,0 +1,2773 @@
+openapi: 3.2.0
+info:
+  version: 2.0.249
+  title: Dfns Payins API
+servers:
+- url: https://api.dfns.io
+  description: Default - Europe
+- url: https://api.uae.dfns.io
+  description: UAE
+- url: https://api.dfns.ninja
+  description: <Deprecated> Staging
+tags:
+- name: Payins
+paths:
+  /payins:
+    post:
+      operationId: createPayin
+      summary: Create Payin
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Deliver stablecoin from the organisation's provider balance to a wallet on-chain.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The destination wallet for the on-ramped funds.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  amount:
+                    type: string
+                    pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                    description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                  provider:
+                    type: string
+                    enum:
+                    - CircleMint
+                  currency:
+                    type: string
+                    enum:
+                    - USD
+                    - EUR
+                    description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                required:
+                - walletId
+                - amount
+                - provider
+                - currency
+                title: Circle Mint Create Payin
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The destination wallet for the on-ramped funds.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  amount:
+                    type: string
+                    pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                    description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                  provider:
+                    type: string
+                    enum:
+                    - Borderless
+                  currency:
+                    type: string
+                    enum:
+                    - USD
+                    - EUR
+                    description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                  country:
+                    type: string
+                    pattern: ^[A-Z]{2}$
+                    description: ISO-3166 Alpha-2 country the fiat deposit originates from.
+                  borderlessAccountId:
+                    type: string
+                    description: Borderless account ID; its registered asset address must match the destination wallet address.
+                  paymentMethod:
+                    type: string
+                    enum:
+                    - Wire
+                    - ACH
+                    - Sepa
+                    description: The fiat payment rail the payer uses to fund the deposit.
+                  asset:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address of the asset to deliver.
+                      required:
+                      - kind
+                      - contract
+                      title: ERC-20 Asset
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        mint:
+                          type: string
+                          description: The token mint address of the asset to deliver.
+                      required:
+                      - kind
+                      - mint
+                      title: SPL/SPL-2022 Asset
+                    description: The asset to deliver on-chain. Must be supported by Borderless on the wallet network.
+                  quoteId:
+                    type: string
+                    description: Executable quote to redeem (from Create Payin Quote), locking its rate until it expires.
+                required:
+                - walletId
+                - amount
+                - provider
+                - currency
+                - country
+                - borderlessAccountId
+                - paymentMethod
+                - asset
+                title: Borderless Create Payin
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^payin-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Payin id.
+                      example: payin-59t9u-eng2t-dd9p5nm02uc81sto
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: The destination wallet for the on-ramped funds.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    amount:
+                      type: string
+                      pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                      description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                    currency:
+                      type: string
+                      enum:
+                      - USD
+                      - EUR
+                      description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                    network:
+                      allOf:
+                      - $ref: '#/components/schemas/Network'
+                      - description: The network the funds are delivered on (the destination wallet network).
+                    status:
+                      type: string
+                      enum:
+                      - Processing
+                      - Completed
+                      - Failed
+                      description: The current status of the payin.
+                    requester:
+                      allOf:
+                      - $ref: '#/components/schemas/Requester'
+                      - description: The user/token that initiated the payin.
+                    dateCreated:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was created.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    dateFinalized:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was finalized.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    provider:
+                      type: string
+                      enum:
+                      - CircleMint
+                    data:
+                      type: object
+                      properties:
+                        executionStatus:
+                          type: string
+                          enum:
+                          - Initializing
+                          - AwaitingTransfer
+                          - Completed
+                          - Failed
+                          description: The Circle Mint execution status.
+                        statusReason:
+                          type: string
+                          description: Reason for the current status, primarily for failure cases.
+                        recipientAddressId:
+                          type: string
+                          description: Circle recipient-registry id for the destination address (approved once in Circle's console).
+                        circleTransferId:
+                          type: string
+                          description: The id of the Circle transfer delivering the funds on-chain.
+                        transactionHash:
+                          type: string
+                          description: The blockchain transaction hash of the delivery transfer.
+                        dateTransferConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the transfer confirmed on-chain.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                      required:
+                      - executionStatus
+                      description: Circle Mint provider-specific payin data.
+                  required:
+                  - id
+                  - walletId
+                  - amount
+                  - currency
+                  - network
+                  - status
+                  - requester
+                  - dateCreated
+                  - provider
+                  - data
+                  title: Circle Mint Payin
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^payin-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Payin id.
+                      example: payin-59t9u-eng2t-dd9p5nm02uc81sto
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: The destination wallet for the on-ramped funds.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    amount:
+                      type: string
+                      pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                      description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                    currency:
+                      type: string
+                      enum:
+                      - USD
+                      - EUR
+                      description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                    network:
+                      allOf:
+                      - $ref: '#/components/schemas/Network'
+                      - description: The network the funds are delivered on (the destination wallet network).
+                    status:
+                      type: string
+                      enum:
+                      - Processing
+                      - Completed
+                      - Failed
+                      description: The current status of the payin.
+                    requester:
+                      allOf:
+                      - $ref: '#/components/schemas/Requester'
+                      - description: The user/token that initiated the payin.
+                    dateCreated:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was created.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    dateFinalized:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was finalized.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    provider:
+                      type: string
+                      enum:
+                      - Borderless
+                    data:
+                      type: object
+                      properties:
+                        executionStatus:
+                          type: string
+                          enum:
+                          - Initializing
+                          - AwaitingDeposit
+                          - Completed
+                          - Failed
+                          description: The Borderless execution status.
+                        statusReason:
+                          type: string
+                          description: Reason for the current status, primarily for failure cases.
+                        borderlessAccountId:
+                          type: string
+                          description: The Borderless account whose registered asset address receives the funds.
+                        country:
+                          type: string
+                          pattern: ^[A-Z]{2}$
+                          description: ISO-3166 Alpha-2 country the fiat deposit originates from.
+                        paymentMethod:
+                          type: string
+                          enum:
+                          - Wire
+                          - ACH
+                          - Sepa
+                          description: The fiat payment rail the payer uses to fund the deposit.
+                        asset:
+                          type: string
+                          description: The provider's code of the asset being delivered (e.g. USDT_POLYGON).
+                        quoteId:
+                          type: string
+                          description: The executable quote the payin was created with, if any.
+                        borderlessTransactionId:
+                          type: string
+                          description: The id of the Borderless deposit transaction.
+                        pfiName:
+                          type: string
+                          description: The Participating Financial Institution fulfilling the deposit.
+                        depositInstruction:
+                          type: object
+                          properties:
+                            paymentMethod:
+                              type: string
+                              description: The fiat payment rail these instructions apply to.
+                            details:
+                              type: object
+                              properties:
+                                depositMessage:
+                                  type:
+                                  - string
+                                  - 'null'
+                                  description: Reference the payer must include with the payment.
+                                bankName:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankAccountNumber:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankRoutingNumber:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankBeneficiaryName:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankBeneficiaryAddress:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankAddress:
+                                  type:
+                                  - string
+                                  - 'null'
+                                iban:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bic:
+                                  type:
+                                  - string
+                                  - 'null'
+                                accountHolderName:
+                                  type:
+                                  - string
+                                  - 'null'
+                              additionalProperties:
+                                type:
+                                - string
+                                - 'null'
+                              description: Rail-dependent bank details to send the fiat to.
+                          required:
+                          - paymentMethod
+                          - details
+                          description: Bank details + reference the payer must wire the fiat to. Absent until Borderless issues them.
+                          title: Borderless Deposit Instruction
+                        transactionHash:
+                          type: string
+                          description: The blockchain transaction hash of the stablecoin delivery.
+                        dateDeliveryConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain delivery was confirmed.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                      required:
+                      - executionStatus
+                      - borderlessAccountId
+                      - country
+                      - paymentMethod
+                      - asset
+                      description: Borderless provider-specific payin data.
+                  required:
+                  - id
+                  - walletId
+                  - amount
+                  - currency
+                  - network
+                  - status
+                  - requester
+                  - dateCreated
+                  - provider
+                  - data
+                  title: Borderless Payin
+    get:
+      operationId: listPayins
+      summary: List Payins
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+      description: List payins with optional filtering and pagination.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Read`: Always required."
+      parameters:
+      - schema:
+          type: integer
+          minimum: 1
+          maximum: 500
+          default: 50
+          description: Maximum number of items to return.
+        required: false
+        description: Maximum number of items to return.
+        name: limit
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        required: false
+        description: Opaque token used to retrieve the next page. Returned as `nextPageToken` from the previous request.
+        name: paginationToken
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Filter payins by wallet ID.
+        required: false
+        description: Filter payins by wallet ID.
+        name: walletId
+        in: query
+      - schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - Processing
+            - Completed
+            - Failed
+            description: The current status of the payin.
+          description: Filter payins by status (comma-separated).
+        required: false
+        description: Filter payins by status (comma-separated).
+        name: status
+        in: query
+      - schema:
+          type: array
+          items:
+            type: string
+            enum:
+            - CircleMint
+            - Borderless
+            description: Payin provider.
+          description: Filter payins by provider (comma-separated).
+        required: false
+        description: Filter payins by provider (comma-separated).
+        name: provider
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      oneOf:
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^payin-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: Payin id.
+                            example: payin-59t9u-eng2t-dd9p5nm02uc81sto
+                          walletId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: The destination wallet for the on-ramped funds.
+                            example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                          amount:
+                            type: string
+                            pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                            description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                          currency:
+                            type: string
+                            enum:
+                            - USD
+                            - EUR
+                            description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                          network:
+                            allOf:
+                            - $ref: '#/components/schemas/Network'
+                            - description: The network the funds are delivered on (the destination wallet network).
+                          status:
+                            type: string
+                            enum:
+                            - Processing
+                            - Completed
+                            - Failed
+                            description: The current status of the payin.
+                          requester:
+                            allOf:
+                            - $ref: '#/components/schemas/Requester'
+                            - description: The user/token that initiated the payin.
+                          dateCreated:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was created.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          dateFinalized:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was finalized.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          provider:
+                            type: string
+                            enum:
+                            - CircleMint
+                          data:
+                            type: object
+                            properties:
+                              executionStatus:
+                                type: string
+                                enum:
+                                - Initializing
+                                - AwaitingTransfer
+                                - Completed
+                                - Failed
+                                description: The Circle Mint execution status.
+                              statusReason:
+                                type: string
+                                description: Reason for the current status, primarily for failure cases.
+                              recipientAddressId:
+                                type: string
+                                description: Circle recipient-registry id for the destination address (approved once in Circle's console).
+                              circleTransferId:
+                                type: string
+                                description: The id of the Circle transfer delivering the funds on-chain.
+                              transactionHash:
+                                type: string
+                                description: The blockchain transaction hash of the delivery transfer.
+                              dateTransferConfirmed:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the transfer confirmed on-chain.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                            required:
+                            - executionStatus
+                            description: Circle Mint provider-specific payin data.
+                        required:
+                        - id
+                        - walletId
+                        - amount
+                        - currency
+                        - network
+                        - status
+                        - requester
+                        - dateCreated
+                        - provider
+                        - data
+                        title: Circle Mint Payin
+                      - type: object
+                        properties:
+                          id:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^payin-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: Payin id.
+                            example: payin-59t9u-eng2t-dd9p5nm02uc81sto
+                          walletId:
+                            type: string
+                            minLength: 1
+                            maxLength: 64
+                            pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                            description: The destination wallet for the on-ramped funds.
+                            example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                          amount:
+                            type: string
+                            pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                            description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                          currency:
+                            type: string
+                            enum:
+                            - USD
+                            - EUR
+                            description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                          network:
+                            allOf:
+                            - $ref: '#/components/schemas/Network'
+                            - description: The network the funds are delivered on (the destination wallet network).
+                          status:
+                            type: string
+                            enum:
+                            - Processing
+                            - Completed
+                            - Failed
+                            description: The current status of the payin.
+                          requester:
+                            allOf:
+                            - $ref: '#/components/schemas/Requester'
+                            - description: The user/token that initiated the payin.
+                          dateCreated:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was created.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          dateFinalized:
+                            type: string
+                            format: date-time
+                            description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was finalized.'
+                            example: 2023-04-14 20:41:28.715000+00:00
+                          provider:
+                            type: string
+                            enum:
+                            - Borderless
+                          data:
+                            type: object
+                            properties:
+                              executionStatus:
+                                type: string
+                                enum:
+                                - Initializing
+                                - AwaitingDeposit
+                                - Completed
+                                - Failed
+                                description: The Borderless execution status.
+                              statusReason:
+                                type: string
+                                description: Reason for the current status, primarily for failure cases.
+                              borderlessAccountId:
+                                type: string
+                                description: The Borderless account whose registered asset address receives the funds.
+                              country:
+                                type: string
+                                pattern: ^[A-Z]{2}$
+                                description: ISO-3166 Alpha-2 country the fiat deposit originates from.
+                              paymentMethod:
+                                type: string
+                                enum:
+                                - Wire
+                                - ACH
+                                - Sepa
+                                description: The fiat payment rail the payer uses to fund the deposit.
+                              asset:
+                                type: string
+                                description: The provider's code of the asset being delivered (e.g. USDT_POLYGON).
+                              quoteId:
+                                type: string
+                                description: The executable quote the payin was created with, if any.
+                              borderlessTransactionId:
+                                type: string
+                                description: The id of the Borderless deposit transaction.
+                              pfiName:
+                                type: string
+                                description: The Participating Financial Institution fulfilling the deposit.
+                              depositInstruction:
+                                type: object
+                                properties:
+                                  paymentMethod:
+                                    type: string
+                                    description: The fiat payment rail these instructions apply to.
+                                  details:
+                                    type: object
+                                    properties:
+                                      depositMessage:
+                                        type:
+                                        - string
+                                        - 'null'
+                                        description: Reference the payer must include with the payment.
+                                      bankName:
+                                        type:
+                                        - string
+                                        - 'null'
+                                      bankAccountNumber:
+                                        type:
+                                        - string
+                                        - 'null'
+                                      bankRoutingNumber:
+                                        type:
+                                        - string
+                                        - 'null'
+                                      bankBeneficiaryName:
+                                        type:
+                                        - string
+                                        - 'null'
+                                      bankBeneficiaryAddress:
+                                        type:
+                                        - string
+                                        - 'null'
+                                      bankAddress:
+                                        type:
+                                        - string
+                                        - 'null'
+                                      iban:
+                                        type:
+                                        - string
+                                        - 'null'
+                                      bic:
+                                        type:
+                                        - string
+                                        - 'null'
+                                      accountHolderName:
+                                        type:
+                                        - string
+                                        - 'null'
+                                    additionalProperties:
+                                      type:
+                                      - string
+                                      - 'null'
+                                    description: Rail-dependent bank details to send the fiat to.
+                                required:
+                                - paymentMethod
+                                - details
+                                description: Bank details + reference the payer must wire the fiat to. Absent until Borderless issues them.
+                                title: Borderless Deposit Instruction
+                              transactionHash:
+                                type: string
+                                description: The blockchain transaction hash of the stablecoin delivery.
+                              dateDeliveryConfirmed:
+                                type: string
+                                format: date-time
+                                description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain delivery was confirmed.'
+                                example: 2023-04-14 20:41:28.715000+00:00
+                            required:
+                            - executionStatus
+                            - borderlessAccountId
+                            - country
+                            - paymentMethod
+                            - asset
+                            description: Borderless provider-specific payin data.
+                        required:
+                        - id
+                        - walletId
+                        - amount
+                        - currency
+                        - network
+                        - status
+                        - requester
+                        - dateCreated
+                        - provider
+                        - data
+                        title: Borderless Payin
+                    description: Current page items.
+                  nextPageToken:
+                    type: string
+                    description: token to use as `paginationToken` to request the next page.
+                required:
+                - items
+  /payins/quote:
+    post:
+      operationId: createPayinQuote
+      x-dfns-deprecated-operation-id: requestPayinQuote
+      summary: Request Payin Quote
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+      description: Request a quote from a given provider for a payin. Returns the stablecoin amount to be delivered and the fees.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The destination wallet — determines the network the funds are delivered on.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  amount:
+                    type: string
+                    pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                    description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                  currency:
+                    type: string
+                    enum:
+                    - USD
+                    - EUR
+                    description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                  provider:
+                    type: string
+                    enum:
+                    - Borderless
+                  country:
+                    type: string
+                    pattern: ^[A-Z]{2}$
+                    description: ISO-3166 Alpha-2 country the fiat deposit originates from.
+                  borderlessAccountId:
+                    type: string
+                    description: Borderless account ID the deposit would be made to.
+                  paymentMethod:
+                    type: string
+                    enum:
+                    - Wire
+                    - ACH
+                    - Sepa
+                    description: The fiat payment rail the payer uses to fund the deposit.
+                  asset:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address of the asset to deliver.
+                      required:
+                      - kind
+                      - contract
+                      title: ERC-20 Asset
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        mint:
+                          type: string
+                          description: The token mint address of the asset to deliver.
+                      required:
+                      - kind
+                      - mint
+                      title: SPL/SPL-2022 Asset
+                    description: The asset to deliver on-chain. Must be supported by Borderless on the wallet network.
+                required:
+                - walletId
+                - amount
+                - currency
+                - provider
+                - country
+                - borderlessAccountId
+                - paymentMethod
+                - asset
+                title: Borderless Create Payin Quote
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    type: string
+                    enum:
+                    - CircleMint
+                    - Borderless
+                    description: Payin provider.
+                  currency:
+                    type: string
+                    enum:
+                    - USD
+                    - EUR
+                    description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                  network:
+                    allOf:
+                    - $ref: '#/components/schemas/Network'
+                    - description: The network the stablecoin would be delivered on.
+                  tid:
+                    type: string
+                    description: The asset (token id) that would be delivered.
+                  timestamp:
+                    type: string
+                    format: date-time
+                    description: ISO 8601 timestamp when the quote was generated.
+                  quotes:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        quoteId:
+                          type: string
+                          description: Executable quote id — pass it to Create Payin to lock this rate until it expires.
+                        dateExpires:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the executable quote expires.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                        offer:
+                          type: object
+                          properties:
+                            amount:
+                              type: number
+                              description: Amount of the stablecoin to be delivered on-chain, net of fees.
+                            fees:
+                              type: number
+                              description: Total fees, in the fiat currency.
+                          required:
+                          - amount
+                          - fees
+                          description: The offer from the provider.
+                      required:
+                      - offer
+                    description: Array of quotes from the provider(s).
+                required:
+                - provider
+                - currency
+                - network
+                - tid
+                - timestamp
+                - quotes
+  /payins/recipients:
+    post:
+      operationId: createPayinRecipient
+      x-dfns-deprecated-operation-id: registerPayinRecipient
+      summary: Register Payin Recipient
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: 'Register a wallet''s address as an payin recipient with the provider. The registration then needs
+
+        to be approved on the provider''s side (for Circle Mint: by an administrator in the Mint Console)
+
+        before payins to that wallet can be created.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  provider:
+                    type: string
+                    enum:
+                    - CircleMint
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet to register as a Circle Mint recipient.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  currency:
+                    type: string
+                    enum:
+                    - USD
+                    - EUR
+                    description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                required:
+                - provider
+                - walletId
+                - currency
+                title: Circle Mint Register Payin Recipient
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    type: string
+                    enum:
+                    - CircleMint
+                    - Borderless
+                    description: Payin provider.
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet whose address is (to be) registered as a recipient.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  currency:
+                    type: string
+                    enum:
+                    - USD
+                    - EUR
+                    description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                  status:
+                    type: string
+                    enum:
+                    - NotRegistered
+                    - PendingVerification
+                    - Active
+                    description: Recipient status.
+                  recipientAddressId:
+                    type: string
+                    description: The provider's recipient-registry id, once registered.
+                required:
+                - provider
+                - walletId
+                - currency
+                - status
+    get:
+      operationId: getPayinRecipient
+      summary: Get Payin Recipient
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+      description: Check whether a wallet's address is registered (and approved) as an payin recipient with the provider.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - CircleMint
+          - Borderless
+          description: The payin provider to check the recipient with.
+        required: true
+        description: The payin provider to check the recipient with.
+        name: provider
+        in: query
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: The wallet whose recipient status to check.
+        required: true
+        description: The wallet whose recipient status to check.
+        name: walletId
+        in: query
+      - schema:
+          type: string
+          enum:
+          - USD
+          - EUR
+          description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+        required: true
+        description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+        name: currency
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  provider:
+                    type: string
+                    enum:
+                    - CircleMint
+                    - Borderless
+                    description: Payin provider.
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet whose address is (to be) registered as a recipient.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  currency:
+                    type: string
+                    enum:
+                    - USD
+                    - EUR
+                    description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                  status:
+                    type: string
+                    enum:
+                    - NotRegistered
+                    - PendingVerification
+                    - Active
+                    description: Recipient status.
+                  recipientAddressId:
+                    type: string
+                    description: The provider's recipient-registry id, once registered.
+                required:
+                - provider
+                - walletId
+                - currency
+                - status
+  /payins/{payinId}:
+    get:
+      operationId: getPayin
+      x-dfns-deprecated-operation-id: getPayinStatus
+      summary: Get Payin Status
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+      description: Retrieve the current status of an payin by its ID.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          minLength: 1
+          maxLength: 64
+          description: Payin id.
+        required: true
+        description: Payin id.
+        name: payinId
+        in: path
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                oneOf:
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^payin-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Payin id.
+                      example: payin-59t9u-eng2t-dd9p5nm02uc81sto
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: The destination wallet for the on-ramped funds.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    amount:
+                      type: string
+                      pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                      description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                    currency:
+                      type: string
+                      enum:
+                      - USD
+                      - EUR
+                      description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                    network:
+                      allOf:
+                      - $ref: '#/components/schemas/Network'
+                      - description: The network the funds are delivered on (the destination wallet network).
+                    status:
+                      type: string
+                      enum:
+                      - Processing
+                      - Completed
+                      - Failed
+                      description: The current status of the payin.
+                    requester:
+                      allOf:
+                      - $ref: '#/components/schemas/Requester'
+                      - description: The user/token that initiated the payin.
+                    dateCreated:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was created.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    dateFinalized:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was finalized.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    provider:
+                      type: string
+                      enum:
+                      - CircleMint
+                    data:
+                      type: object
+                      properties:
+                        executionStatus:
+                          type: string
+                          enum:
+                          - Initializing
+                          - AwaitingTransfer
+                          - Completed
+                          - Failed
+                          description: The Circle Mint execution status.
+                        statusReason:
+                          type: string
+                          description: Reason for the current status, primarily for failure cases.
+                        recipientAddressId:
+                          type: string
+                          description: Circle recipient-registry id for the destination address (approved once in Circle's console).
+                        circleTransferId:
+                          type: string
+                          description: The id of the Circle transfer delivering the funds on-chain.
+                        transactionHash:
+                          type: string
+                          description: The blockchain transaction hash of the delivery transfer.
+                        dateTransferConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the transfer confirmed on-chain.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                      required:
+                      - executionStatus
+                      description: Circle Mint provider-specific payin data.
+                  required:
+                  - id
+                  - walletId
+                  - amount
+                  - currency
+                  - network
+                  - status
+                  - requester
+                  - dateCreated
+                  - provider
+                  - data
+                  title: Circle Mint Payin
+                - type: object
+                  properties:
+                    id:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^payin-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: Payin id.
+                      example: payin-59t9u-eng2t-dd9p5nm02uc81sto
+                    walletId:
+                      type: string
+                      minLength: 1
+                      maxLength: 64
+                      pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                      description: The destination wallet for the on-ramped funds.
+                      example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                    amount:
+                      type: string
+                      pattern: ^[0-9]+(\.[0-9]{1,2})?$
+                      description: The amount to deliver on-chain, in currency units (e.g. "100.00").
+                    currency:
+                      type: string
+                      enum:
+                      - USD
+                      - EUR
+                      description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                    network:
+                      allOf:
+                      - $ref: '#/components/schemas/Network'
+                      - description: The network the funds are delivered on (the destination wallet network).
+                    status:
+                      type: string
+                      enum:
+                      - Processing
+                      - Completed
+                      - Failed
+                      description: The current status of the payin.
+                    requester:
+                      allOf:
+                      - $ref: '#/components/schemas/Requester'
+                      - description: The user/token that initiated the payin.
+                    dateCreated:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was created.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    dateFinalized:
+                      type: string
+                      format: date-time
+                      description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the payin was finalized.'
+                      example: 2023-04-14 20:41:28.715000+00:00
+                    provider:
+                      type: string
+                      enum:
+                      - Borderless
+                    data:
+                      type: object
+                      properties:
+                        executionStatus:
+                          type: string
+                          enum:
+                          - Initializing
+                          - AwaitingDeposit
+                          - Completed
+                          - Failed
+                          description: The Borderless execution status.
+                        statusReason:
+                          type: string
+                          description: Reason for the current status, primarily for failure cases.
+                        borderlessAccountId:
+                          type: string
+                          description: The Borderless account whose registered asset address receives the funds.
+                        country:
+                          type: string
+                          pattern: ^[A-Z]{2}$
+                          description: ISO-3166 Alpha-2 country the fiat deposit originates from.
+                        paymentMethod:
+                          type: string
+                          enum:
+                          - Wire
+                          - ACH
+                          - Sepa
+                          description: The fiat payment rail the payer uses to fund the deposit.
+                        asset:
+                          type: string
+                          description: The provider's code of the asset being delivered (e.g. USDT_POLYGON).
+                        quoteId:
+                          type: string
+                          description: The executable quote the payin was created with, if any.
+                        borderlessTransactionId:
+                          type: string
+                          description: The id of the Borderless deposit transaction.
+                        pfiName:
+                          type: string
+                          description: The Participating Financial Institution fulfilling the deposit.
+                        depositInstruction:
+                          type: object
+                          properties:
+                            paymentMethod:
+                              type: string
+                              description: The fiat payment rail these instructions apply to.
+                            details:
+                              type: object
+                              properties:
+                                depositMessage:
+                                  type:
+                                  - string
+                                  - 'null'
+                                  description: Reference the payer must include with the payment.
+                                bankName:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankAccountNumber:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankRoutingNumber:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankBeneficiaryName:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankBeneficiaryAddress:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bankAddress:
+                                  type:
+                                  - string
+                                  - 'null'
+                                iban:
+                                  type:
+                                  - string
+                                  - 'null'
+                                bic:
+                                  type:
+                                  - string
+                                  - 'null'
+                                accountHolderName:
+                                  type:
+                                  - string
+                                  - 'null'
+                              additionalProperties:
+                                type:
+                                - string
+                                - 'null'
+                              description: Rail-dependent bank details to send the fiat to.
+                          required:
+                          - paymentMethod
+                          - details
+                          description: Bank details + reference the payer must wire the fiat to. Absent until Borderless issues them.
+                          title: Borderless Deposit Instruction
+                        transactionHash:
+                          type: string
+                          description: The blockchain transaction hash of the stablecoin delivery.
+                        dateDeliveryConfirmed:
+                          type: string
+                          format: date-time
+                          description: '[ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) date (must be UTC). ISO 8601 timestamp when the on-chain delivery was confirmed.'
+                          example: 2023-04-14 20:41:28.715000+00:00
+                      required:
+                      - executionStatus
+                      - borderlessAccountId
+                      - country
+                      - paymentMethod
+                      - asset
+                      description: Borderless provider-specific payin data.
+                  required:
+                  - id
+                  - walletId
+                  - amount
+                  - currency
+                  - network
+                  - status
+                  - requester
+                  - dateCreated
+                  - provider
+                  - data
+                  title: Borderless Payin
+  /payins/accounts:
+    get:
+      operationId: listPayinAccounts
+      summary: List Payin Accounts
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+      description: 'List the provider accounts, with their registered wallet addresses per asset. An account is created on the provider platform (e.g. the Borderless dashboard) and its registered addresses serve both directions: a payin delivers to — and a payout is funded from — a wallet whose address is registered on the account.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - CircleMint
+          - Borderless
+          description: The provider to list accounts from. Only Borderless has payin accounts.
+        required: true
+        description: The provider to list accounts from. Only Borderless has payin accounts.
+        name: provider
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        accountId:
+                          type: string
+                          description: The provider's account id.
+                        name:
+                          type: string
+                          description: The account name, when the provider has one.
+                        assets:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              asset:
+                                type: string
+                                description: The provider's asset code (e.g. USDC_ETHEREUM).
+                              address:
+                                type: string
+                                description: The registered destination address for the asset.
+                            required:
+                            - asset
+                            - address
+                          description: The assets registered on the account, with their destination addresses.
+                      required:
+                      - accountId
+                      - assets
+                    description: The provider accounts available for payins.
+                required:
+                - items
+  /payins/balances:
+    get:
+      operationId: listPayinBalances
+      summary: List Payin Balances
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+      description: 'The organisation''s available balance at the payin provider, one entry per currency —
+
+        the funds payins can deliver on-chain.'
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - CircleMint
+          - Borderless
+          description: The payin provider to fetch balances from.
+        required: true
+        description: The payin provider to fetch balances from.
+        name: provider
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        provider:
+                          type: string
+                          enum:
+                          - CircleMint
+                          - Borderless
+                          description: Payin provider.
+                        currency:
+                          type: string
+                          description: Fiat currency of the balance (e.g. USD, EUR).
+                        amount:
+                          type: string
+                          description: Available amount in currency units (e.g. "408.82").
+                      required:
+                      - provider
+                      - currency
+                      - amount
+                required:
+                - items
+  /payins/options:
+    get:
+      operationId: listPayinOptions
+      summary: List Payin Options
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+      description: List the currently available payin options — deliverable assets and fiat currency/payment-method/country combinations — as covered by the active provider institutions.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Read`: Always required."
+      parameters:
+      - schema:
+          type: string
+          enum:
+          - CircleMint
+          - Borderless
+          description: The provider to list options from. Only Borderless has coverage-dependent options.
+        required: true
+        description: The provider to list options from. Only Borderless has coverage-dependent options.
+        name: provider
+        in: query
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  assets:
+                    type: array
+                    items:
+                      type: string
+                    description: The provider's asset codes deliverable by the active PFIs.
+                  currencies:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        currency:
+                          type: string
+                          enum:
+                          - USD
+                          - EUR
+                          description: 'Fiat currency of the payin (for Circle Mint it determines the delivered stablecoin: USD → USDC, EUR → EURC).'
+                        paymentMethods:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              paymentMethod:
+                                type: string
+                                enum:
+                                - Wire
+                                - ACH
+                                - Sepa
+                                description: The fiat payment rail the payer uses to fund the deposit.
+                              countries:
+                                type: array
+                                items:
+                                  type: string
+                                description: ISO-3166 Alpha-2 countries the fiat can be paid from with this payment method.
+                            required:
+                            - paymentMethod
+                            - countries
+                          description: The payment methods available for this currency, with their eligible countries.
+                      required:
+                      - currency
+                      - paymentMethods
+                    description: The fiat currencies payins can be funded with, per payment method and country.
+                required:
+                - assets
+                - currencies
+  /payins/accounts/assets:
+    post:
+      operationId: registerPayinAccountAsset
+      summary: Register Payin Account Asset
+      tags:
+      - Payins
+      security:
+      - authenticationToken: []
+        userActionSignature: []
+      description: Register a wallet's address for an asset on a provider account, a prerequisite for both payins (the wallet receives the delivered asset) and payouts (the wallet funds the withdrawal). Returns the updated account.
+      x-mint:
+        content: "#### Authentication\n\n✅ Organization User (`CustomerEmployee`)    \n❌ Delegated User (`EndUser`)    \n✅ Service Account\n\n#### Required Permissions\n\n`Payins:Create`: Always required."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+              - type: object
+                properties:
+                  provider:
+                    type: string
+                    enum:
+                    - Borderless
+                  borderlessAccountId:
+                    type: string
+                    description: The Borderless account to register the asset on.
+                  walletId:
+                    type: string
+                    minLength: 1
+                    maxLength: 64
+                    pattern: ^wa-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+                    description: The wallet whose address becomes the delivery destination for the asset.
+                    example: wa-5pfuu-9euek-h0odgb6snva8ph3k
+                  asset:
+                    oneOf:
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Erc20
+                        contract:
+                          type: string
+                          description: The ERC-20 contract address of the asset to deliver.
+                      required:
+                      - kind
+                      - contract
+                      title: ERC-20 Asset
+                    - type: object
+                      properties:
+                        kind:
+                          type: string
+                          enum:
+                          - Spl
+                          - Spl2022
+                        mint:
+                          type: string
+                          description: The token mint address of the asset to deliver.
+                      required:
+                      - kind
+                      - mint
+                      title: SPL/SPL-2022 Asset
+                    description: The asset to deliver on-chain. Must be supported by Borderless on the wallet network.
+                required:
+                - provider
+                - borderlessAccountId
+                - walletId
+                - asset
+                title: Borderless Register Payin Account Asset
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  accountId:
+                    type: string
+                    description: The provider's account id.
+                  name:
+                    type: string
+                    description: The account name, when the provider has one.
+                  assets:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        asset:
+                          type: string
+                          description: The provider's asset code (e.g. USDC_ETHEREUM).
+                        address:
+                          type: string
+                          description: The registered destination address for the asset.
+                      required:
+                      - asset
+                      - address
+                    description: The assets registered on the account, with their destination addresses.
+                required:
+                - accountId
+                - assets
+components:
+  schemas:
+    Network:
+      type: string
+      title: Network
+      enum:
+      - Algorand
+      - AlgorandTestnet
+      - Aptos
+      - AptosTestnet
+      - ArbitrumOne
+      - ArbitrumSepolia
+      - Arc
+      - ArcTestnet
+      - Areum
+      - AvalancheC
+      - AvalancheCFuji
+      - Base
+      - BaseSepolia
+      - Berachain
+      - BerachainBepolia
+      - Bitcoin
+      - BitcoinSignet
+      - BitcoinTestnet4
+      - BitcoinCash
+      - Bob
+      - BobSepolia
+      - Bsc
+      - BscTestnet
+      - Canton
+      - CantonTestnet
+      - Cardano
+      - CardanoPreprod
+      - Concordium
+      - ConcordiumTestnet
+      - Celo
+      - CeloSepolia
+      - Codex
+      - CodexSepolia
+      - CosmosHub4
+      - CosmosIcsTestnet
+      - Dogecoin
+      - DogecoinTestnet
+      - Ethereum
+      - EthereumClassic
+      - EthereumClassicMordor
+      - EthereumSepolia
+      - EthereumHoodi
+      - FlareC
+      - FlareCCoston2
+      - FlowEvm
+      - FlowEvmTestnet
+      - Hedera
+      - HederaTestnet
+      - Ink
+      - InkSepolia
+      - InternetComputer
+      - Ion
+      - IonTestnet
+      - Iota
+      - IotaTestnet
+      - Kusama
+      - KusamaAssetHub
+      - Litecoin
+      - LitecoinTestnet
+      - Monad
+      - MonadTestnet
+      - Movement
+      - MovementTestnet
+      - Near
+      - NearTestnet
+      - Optimism
+      - OptimismSepolia
+      - Origyn
+      - Plasma
+      - PlasmaTestnet
+      - Plume
+      - PlumeSepolia
+      - Paseo
+      - PaseoAssetHub
+      - Polkadot
+      - PolkadotAssetHub
+      - Polygon
+      - PolygonAmoy
+      - Polymesh
+      - PolymeshTestnet
+      - Rayls
+      - RaylsTestnet
+      - Robinhood
+      - RobinhoodSepolia
+      - SeiAtlantic2
+      - SeiPacific1
+      - Solana
+      - SolanaDevnet
+      - Sonic
+      - SonicTestnet
+      - Starknet
+      - StarknetSepolia
+      - Stellar
+      - StellarTestnet
+      - Sui
+      - SuiTestnet
+      - Tezos
+      - TezosShadownet
+      - Tempo
+      - TempoModerato
+      - Tsc
+      - TscTestnet1
+      - Ton
+      - TonTestnet
+      - Tron
+      - TronNile
+      - Westend
+      - WestendAssetHub
+      - Xdc
+      - XdcApothem
+      - XLayer
+      - XLayerSepolia
+      - XrpLedger
+      - XrpLedgerTestnet
+    Requester:
+      type: object
+      properties:
+        userId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^us-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: User id.
+          example: us-6b58p-r53sr-rlrd3l5cj3uc4ome
+        tokenId:
+          type: string
+          minLength: 1
+          maxLength: 64
+          pattern: ^to-[a-z0-9]{5}-[a-z0-9]{5}-[a-z0-9]{14,16}$
+          description: Token id.
+          example: to-202a0-cdo33-o65mbt6q758lvvnt
+      required:
+      - userId
+      description: The user who initiated the request.
+  securitySchemes:
+    authenticationToken:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: '**Bearer Token:** Used to authenticate API requests.
+
+        More details how to generate the token: [Authentication flows](https://docs.dfns.co/api-reference/auth/login-flows)'
+    userActionSignature:
+      type: apiKey
+      in: header
+      name: X-DFNS-USERACTION
+      description: '**User Action Signature:** Used to sign the change-inducing API requests.
+
+        More details how to generate the token: [User Action Signing flows](https://docs.dfns.co/api-reference/auth/signing-flows)'
+x-networks:
+- id: Algorand
+  name: Algorand
+  testnets:
+  - network: AlgorandTestnet
+    faucet: https://bank.testnet.algorand.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - ASA
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Aptos
+  name: Aptos
+  testnets:
+  - network: AptosTestnet
+    faucet: https://www.aptosfaucet.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: ArbitrumOne
+  name: Arbitrum One
+  testnets:
+  - network: ArbitrumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Arc
+  name: Arc
+  testnets:
+  - network: ArcTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Areum
+  name: Areum
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: AvalancheC
+  name: Avalanche C-Chain
+  testnets:
+  - network: AvalancheCFuji
+    faucet: https://faucets.chain.link/fuji
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Base
+  name: Base
+  testnets:
+  - network: BaseSepolia
+    faucet: https://docs.base.org/base-chain/tools/network-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Berachain
+  name: Berachain
+  testnets:
+  - network: BerachainBepolia
+    faucet: https://bepolia.faucet.berachain.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bsc
+  name: Binance Smart Chain
+  testnets:
+  - network: BscTestnet
+    faucet: https://www.bnbchain.org/en/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bitcoin
+  name: Bitcoin
+  testnets:
+  - network: BitcoinSignet
+    faucet: https://signetfaucet.com/
+  - network: BitcoinTestnet4
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: BitcoinCash
+  name: Bitcoin Cash
+  testnets: []
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Bob
+  name: BOB
+  testnets:
+  - network: BobSepolia
+    faucet: https://faucets.chain.link/bob-testnet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Canton
+  name: Canton
+  testnets:
+  - network: CantonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - CIP-56
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Cardano
+  name: Cardano
+  testnets:
+  - network: CardanoPreprod
+    faucet: https://docs.cardano.org/cardano-testnets/tools/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Asset
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Celo
+  name: Celo
+  testnets:
+  - network: CeloSepolia
+    faucet: https://faucet.celo.org/celo-sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: '[^2]'
+- id: Codex
+  name: Codex
+  testnets:
+  - network: CodexSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Concordium
+  name: Concordium
+  testnets:
+  - network: ConcordiumTestnet
+    faucet: https://github.com/Concordium/concordium-dapp-examples/tree/main/testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - CIS-2
+  - CIS-7
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: CosmosHub4
+  name: Cosmos Hub 4
+  testnets:
+  - network: CosmosIcsTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Dogecoin
+  name: Dogecoin
+  testnets:
+  - network: DogecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ethereum
+  name: Ethereum
+  testnets:
+  - network: EthereumHoodi
+    faucet: null
+  - network: EthereumSepolia
+    faucet: https://cloud.google.com/application/web3/faucet/ethereum/sepolia
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  - ERC-7984
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: EthereumClassic
+  name: Ethereum Classic
+  testnets:
+  - network: EthereumClassicMordor
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlareC
+  name: Flare C-Chain
+  testnets:
+  - network: FlareCCoston2
+    faucet: https://faucet.flare.network/coston2
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: FlowEvm
+  name: Flow EVM
+  testnets:
+  - network: FlowEvmTestnet
+    faucet: https://faucet.flow.com/fund-account
+  tier: 1
+  specialty: true
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Hedera
+  name: Hedera
+  testnets:
+  - network: HederaTestnet
+    faucet: https://portal.hedera.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - HTS
+  - HIP-17
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: InternetComputer
+  name: ICP (aka Dfinity)
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Ink
+  name: Ink
+  testnets:
+  - network: InkSepolia
+    faucet: https://inkonchain.com/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ion
+  name: ION
+  testnets:
+  - network: IonTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Iota
+  name: Iota
+  testnets:
+  - network: IotaTestnet
+    faucet: https://docs.iota.org/developer/getting-started/get-coins
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Kusama
+  name: Kusama
+  testnets:
+  - network: Westend
+    faucet: https://faucet.polkadot.io/westend
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: KusamaAssetHub
+  name: Kusama Asset Hub
+  testnets:
+  - network: WestendAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Litecoin
+  name: Litecoin
+  testnets:
+  - network: LitecoinTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: Schnorr
+    curve: secp256k1
+  footnote: null
+- id: Monad
+  name: Monad
+  testnets:
+  - network: MonadTestnet
+    faucet: https://faucet.monad.xyz
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Movement
+  name: Movement
+  testnets:
+  - network: MovementTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - AIP-21
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Near
+  name: NEAR
+  testnets:
+  - network: NearTestnet
+    faucet: https://near-faucet.io/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Optimism
+  name: Optimism
+  testnets:
+  - network: OptimismSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Origyn
+  name: ORIGYN
+  testnets: []
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Plasma
+  name: Plasma
+  testnets:
+  - network: PlasmaTestnet
+    faucet: https://www.plasma.to/docs/plasma-chain/tools/faucets
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Plume
+  name: Plume
+  testnets:
+  - network: PlumeSepolia
+    faucet: https://faucet.plume.org/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polkadot
+  name: Polkadot
+  testnets:
+  - network: Paseo
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: '@deprecated Assets have been moved to Asset Hub. Refer to [multichain wallets](https://docs.dfns.co/guides/multichain-wallets) to recover your funds.'
+- id: PolkadotAssetHub
+  name: Polkadot Asset Hub
+  testnets:
+  - network: PaseoAssetHub
+    faucet: null
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Polygon
+  name: Polygon
+  testnets:
+  - network: PolygonAmoy
+    faucet: https://faucet.polygon.technology/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Polymesh
+  name: Polymesh
+  testnets:
+  - network: PolymeshTestnet
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Rayls
+  name: Rayls
+  testnets:
+  - network: RaylsTestnet
+    faucet: https://devnet-dapp.rayls.com/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards: null
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Robinhood
+  name: Robinhood Chain
+  testnets:
+  - network: RobinhoodSepolia
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: SeiPacific1
+  name: Sei Pacific
+  testnets:
+  - network: SeiAtlantic2
+    faucet: https://docs.sei.io/learn/faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Solana
+  name: Solana
+  testnets:
+  - network: SolanaDevnet
+    faucet: https://faucet.solana.com/
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SPL
+  - SPL2022
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sonic
+  name: Sonic
+  testnets:
+  - network: SonicTestnet
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Starknet
+  name: Starknet
+  testnets:
+  - network: StarknetSepolia
+    faucet: https://starknet-faucet.vercel.app
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - SNIP-2
+  - SNIP-3
+  keyFormats:
+  - scheme: ECDSA
+    curve: stark
+  footnote: null
+- id: Stellar
+  name: Stellar
+  testnets:
+  - network: StellarTestnet
+    faucet: https://lab.stellar.org/account/fund
+  tier: 1
+  specialty: false
+  feeSponsor: true
+  walletConnect: true
+  standards:
+  - SEP-41
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Sui
+  name: Sui
+  testnets:
+  - network: SuiTestnet
+    faucet: https://faucet.sui.io/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - Coin
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tempo
+  name: Tempo
+  testnets:
+  - network: TempoModerato
+    faucet: null
+  tier: 1
+  specialty: true
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tezos
+  name: Tezos
+  testnets:
+  - network: TezosShadownet
+    faucet: https://faucet.shadownet.teztnets.com/
+  tier: 2
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards: null
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Ton
+  name: TON
+  testnets:
+  - network: TonTestnet
+    faucet: https://faucet.chainstack.com/ton-testnet-faucet
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - TEP-74
+  keyFormats:
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
+- id: Tron
+  name: TRON
+  testnets:
+  - network: TronNile
+    faucet: https://nileex.io/join/getJoinPage
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - TRC-10
+  - TRC-20
+  - TRC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Tsc
+  name: Trusted Smart Chain
+  testnets:
+  - network: TscTestnet1
+    faucet: null
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XLayer
+  name: X Layer Network
+  testnets:
+  - network: XLayerSepolia
+    faucet: https://web3.okx.com/xlayer/faucet/xlayerfaucet/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: Xdc
+  name: XDC Network
+  testnets:
+  - network: XdcApothem
+    faucet: https://faucet.apothem.network/
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: true
+  standards:
+  - ERC-20
+  - ERC-721
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  footnote: null
+- id: XrpLedger
+  name: XrpLedger (aka Ripple)
+  testnets:
+  - network: XrpLedgerTestnet
+    faucet: https://xrpl.org/resources/dev-tools/xrp-faucets
+  tier: 1
+  specialty: false
+  feeSponsor: false
+  walletConnect: false
+  standards:
+  - IOU
+  - XLS-33
+  keyFormats:
+  - scheme: ECDSA
+    curve: secp256k1
+  - scheme: EdDSA
+    curve: ed25519
+  footnote: null
