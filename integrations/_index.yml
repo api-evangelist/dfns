@@ -15,3 +15,34 @@
   relationship: distribution-channel
   status: not-a-workflow
   arazzo: null
+- slug: dfns-lf-decentralized-trust-membership-landscape
+  label: LF Decentralized Trust (membership / landscape)
+  partner: lf-decentralized-trust
+  partner_name: LF Decentralized Trust (membership / landscape)
+  category: LF Decentralized Trust membership
+  type: register
+  channel: standard-directory
+  evidence: https://landscape.lfdecentralizedtrust.org
+  source: edge
+  relationship: standard-participant
+  contract_reference:
+    register: LF Decentralized Trust Landscape (landscape.lfdecentralizedtrust.org/data/full.json)
+    spec_file: null
+    standard: LF Decentralized Trust
+    role: lfdt-member
+    registered_name: Dfns
+    registered_names:
+    - DFNS
+    - Dfns
+    website: https://dfns.co/
+    matched_domain: dfns.co
+    matched_by: domain
+    landscape_categories:
+    - Smart Contracts/Tokenization / Digital wallets
+    landscape_entries: 1
+    signal_note: 'participation only: LFDT membership / a landscape listing is standard-participant evidence, not
+      depth. Tier, entries and categories are CONTEXT, never counted'
+    detected_by: sweep-lf-decentralized-trust-landscape.py
+    detected: '2026-10-22'
+  status: not-a-workflow
+  arazzo: null
