@@ -1,4 +1,4 @@
-# Dfns (dfns)
+# Dfns
 
 <!-- API-EVANGELIST-PROVENANCE:BEGIN -->
 > ### About this repository
@@ -66,237 +66,138 @@
 
 Dfns is a wallet-as-a-service and MPC key-management infrastructure provider. Its API lets businesses create programmable, non-custodial wallets backed by multi-party-computation key shares, sign and broadcast transactions across many blockchains, and govern every action through a programmable policy engine with delegated signing, approvals, and User Action Signing.
 
-**APIs.json:** [https://raw.githubusercontent.com/api-evangelist/dfns/refs/heads/main/apis.yml](https://raw.githubusercontent.com/api-evangelist/dfns/refs/heads/main/apis.yml)
+**Areas:** Wallets · MPC · Key Management · Digital Assets · Web3 · Non-Custodial
 
-## Tags
+## Dfns on APIs.io
 
-- Wallets
-- MPC
-- Key Management
-- Digital Assets
-- Web3
-- Non-Custodial
+Everything profiled for Dfns is published on APIs.io rather than in this repository. Start at the provider page — **[apis.io/providers/dfns/](https://apis.io/providers/dfns/)** — or go straight to one of the APIs or properties below.
 
-## Timestamps
+### APIs (12)
 
-- **Created:** 2026-07-01
-- **Modified:** 2026-07-01
+- [Dfns Approvals API](https://apis.io/apis/dfns/dfns-approvals-api/) — Approval workflow driven by the policy engine.
+- [Dfns Auth API](https://apis.io/apis/dfns/dfns-auth-api/) — Login, User Action Signing, users, and credentials.
+- [Dfns Keys API](https://apis.io/apis/dfns/dfns-keys-api/) — Standalone MPC keys and delegated signing.
+- [Dfns Networks API](https://apis.io/apis/dfns/dfns-networks-api/) — Network fee estimates and read-only blockchain calls.
+- [Dfns Permissions API](https://apis.io/apis/dfns/dfns-permissions-api/) — Permissions and their assignments to identities.
+- [Dfns Policies API](https://apis.io/apis/dfns/dfns-policies-api/) — Policy engine rules and approval decisions.
+- [Dfns Signatures API](https://apis.io/apis/dfns/dfns-signatures-api/) — Raw signature generation from keys.
+- [Dfns Transactions API](https://apis.io/apis/dfns/dfns-transactions-api/) — Sign-and-broadcast of caller-supplied transactions from a wallet.
+- [Dfns Transfers API](https://apis.io/apis/dfns/dfns-transfers-api/) — Asset transfers built, signed, and broadcast from a wallet.
+- [Dfns Wallets API](https://apis.io/apis/dfns/dfns-wallets-api/) — Programmable non-custodial wallets, balances, NFTs, and history.
+- [Dfns Webhooks API](https://apis.io/apis/dfns/dfns-webhooks-api/) — Event webhooks and delivery logs.
+- [Dfns Service Accounts API](https://apis.io/apis/dfns/dfns-service-accounts-api/) — Machine identities and their access tokens.
 
-## APIs
+### Published properties
 
-### Dfns Wallets API
+Each property below is a page on APIs.io carrying the machine-readable artifact and what it says.
 
-Create and manage programmable non-custodial wallets on many blockchain networks, and read wallet addresses, asset balances, NFTs, and on-chain history.
+#### Agentic access (1)
 
-- **Human URL:** [https://docs.dfns.co/d/api-docs/wallets](https://docs.dfns.co/d/api-docs/wallets)
-- **Base URL:** `https://api.dfns.io`
+Which operations an agent can call, which act, and which need a human in the loop.
 
-#### Tags
+- [Dfns Agentic Access](https://apis.io/agentic-access/dfns/dfns-agentic-access/)
 
-- Wallets
-- Balances
-- NFTs
+#### Collections (13)
 
-#### Properties
+Postman and Open Collection request collections.
 
-- [Documentation](https://docs.dfns.co/d/api-docs/wallets)
-- [API Reference](https://docs.dfns.co/d/api-docs/wallets/api-reference)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+- [Dfns API](https://apis.io/collections/dfns/open-dfns/)
+- [Dfns Approvals API](https://apis.io/collections/dfns/open-dfns-approvals-api/)
+- [Dfns Approvals Auth API](https://apis.io/collections/dfns/open-dfns-auth-api/)
+- [Dfns Approvals Keys API](https://apis.io/collections/dfns/open-dfns-keys-api/)
+- [Dfns Approvals Networks API](https://apis.io/collections/dfns/open-dfns-networks-api/)
+- [Dfns Approvals Permissions API](https://apis.io/collections/dfns/open-dfns-permissions-api/)
+- [Dfns Approvals Policies API](https://apis.io/collections/dfns/open-dfns-policies-api/)
+- [Dfns Approvals ServiceAccounts API](https://apis.io/collections/dfns/open-dfns-serviceaccounts-api/)
+- [Dfns Approvals Signatures API](https://apis.io/collections/dfns/open-dfns-signatures-api/)
+- [Dfns Approvals Transactions API](https://apis.io/collections/dfns/open-dfns-transactions-api/)
+- [Dfns Approvals Transfers API](https://apis.io/collections/dfns/open-dfns-transfers-api/)
+- [Dfns Approvals Wallets API](https://apis.io/collections/dfns/open-dfns-wallets-api/)
+- [Dfns Approvals Webhooks API](https://apis.io/collections/dfns/open-dfns-webhooks-api/)
 
-### Dfns Keys API
+#### Security (2)
 
-Create and manage standalone MPC keys (scheme/curve) independent of a single network, and generate raw signatures directly from a key.
+Authentication, trust centre, and vulnerability disclosure.
 
-- **Human URL:** [https://docs.dfns.co/d/api-docs/keys](https://docs.dfns.co/d/api-docs/keys)
-- **Base URL:** `https://api.dfns.io`
+- [Dfns Authentication](https://apis.io/security/dfns/dfns-authentication/)
+- [Dfns Domain Security](https://apis.io/security/dfns/dfns-domain-security/)
 
-#### Tags
+#### Plans and pricing (1)
 
-- Keys
-- MPC
-- Signing
+Published plans, tiers and prices.
 
-#### Properties
+- [Dfns Plans Pricing](https://apis.io/plans/dfns/dfns-plans-pricing/)
 
-- [Documentation](https://docs.dfns.co/d/api-docs/keys)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+#### Rate limits (1)
 
-### Dfns Transfers API
+Published request limits.
 
-Initiate native, token (ERC-20/SPL), and NFT transfers from a wallet; Dfns builds, signs, and broadcasts the transaction and tracks its status.
+- [Dfns Rate Limits](https://apis.io/rate-limits/dfns/dfns-rate-limits/)
 
-- **Human URL:** [https://docs.dfns.co/d/api-docs/wallets/transfer-asset-from-wallet](https://docs.dfns.co/d/api-docs/wallets/transfer-asset-from-wallet)
-- **Base URL:** `https://api.dfns.io`
+#### FinOps (1)
 
-#### Tags
+What the API costs to run, by operation.
 
-- Transfers
-- Payments
-- Broadcast
+- [Dfns Finops](https://apis.io/finops/dfns/dfns-finops/)
 
-#### Properties
+## Where to find this API
 
-- [Documentation](https://docs.dfns.co/d/api-docs/wallets/transfer-asset-from-wallet)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
+Links to the company's own pages. This repository publishes no copy of their specifications — the canonical document is theirs and lives at the URLs below.
 
-### Dfns Transactions API
-
-Sign and broadcast caller-supplied transactions - including smart contract calls - from a wallet, and list transaction requests and their status.
-
-- **Human URL:** [https://docs.dfns.co/d/api-docs/wallets/broadcast-transaction-from-wallet](https://docs.dfns.co/d/api-docs/wallets/broadcast-transaction-from-wallet)
-- **Base URL:** `https://api.dfns.io`
-
-#### Tags
-
-- Transactions
-- Broadcast
-- Smart Contracts
-
-#### Properties
-
-- [Documentation](https://docs.dfns.co/d/api-docs/wallets/broadcast-transaction-from-wallet)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-
-### Dfns Signatures API
-
-Generate signatures (hash, message, EIP-712, transaction, PSBT) from a wallet or key without broadcasting, and retrieve signature request status.
-
-- **Human URL:** [https://docs.dfns.co/d/api-docs/wallets/generate-signature-from-wallet](https://docs.dfns.co/d/api-docs/wallets/generate-signature-from-wallet)
-- **Base URL:** `https://api.dfns.io`
-
-#### Tags
-
-- Signatures
-- Signing
-- EIP-712
-
-#### Properties
-
-- [Documentation](https://docs.dfns.co/d/api-docs/wallets/generate-signature-from-wallet)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-
-### Dfns Policy Engine and Approvals API
-
-Define policies that govern activities (e.g. signing) with rules and actions (block, request approval), and drive the approval workflow via decisions.
-
-- **Human URL:** [https://docs.dfns.co/d/api-docs/policy-engine](https://docs.dfns.co/d/api-docs/policy-engine)
-- **Base URL:** `https://api.dfns.io`
-
-#### Tags
-
-- Policy Engine
-- Approvals
-- Governance
-
-#### Properties
-
-- [Documentation](https://docs.dfns.co/d/api-docs/policy-engine)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-
-### Dfns Webhooks API
-
-Register HTTPS webhooks to receive events for wallet, transfer, signature, and policy activity; ping endpoints and inspect the event delivery log.
-
-- **Human URL:** [https://docs.dfns.co/d/api-docs/webhooks](https://docs.dfns.co/d/api-docs/webhooks)
-- **Base URL:** `https://api.dfns.io`
-
-#### Tags
-
-- Webhooks
-- Events
-- Notifications
-
-#### Properties
-
-- [Documentation](https://docs.dfns.co/d/api-docs/webhooks)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-
-### Dfns Permissions and Auth API
-
-Manage permissions and assignments, users, login and delegated login, and the User Action Signing challenge/complete flow that authorizes sensitive operations.
-
-- **Human URL:** [https://docs.dfns.co/d/api-docs/authentication](https://docs.dfns.co/d/api-docs/authentication)
-- **Base URL:** `https://api.dfns.io`
-
-#### Tags
-
-- Permissions
-- Auth
-- User Action Signing
-
-#### Properties
-
-- [Documentation](https://docs.dfns.co/d/api-docs/authentication)
-- [API Reference](https://docs.dfns.co/d/api-docs/authentication/user-action-signing)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-
-### Dfns Service Accounts API
-
-Create and manage service accounts (machine identities) and their access tokens for server-to-server API access, including activate/deactivate.
-
-- **Human URL:** [https://docs.dfns.co/d/api-docs/authentication/service-account-management](https://docs.dfns.co/d/api-docs/authentication/service-account-management)
-- **Base URL:** `https://api.dfns.io`
-
-#### Tags
-
-- Service Accounts
-- Machine Identity
-- Access Tokens
-
-#### Properties
-
-- [Documentation](https://docs.dfns.co/d/api-docs/authentication/service-account-management)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-
-### Dfns Networks API
-
-Estimate network fees and perform read-only smart contract calls against supported blockchain networks without creating a transaction.
-
-- **Human URL:** [https://docs.dfns.co/d/api-docs/networks](https://docs.dfns.co/d/api-docs/networks)
-- **Base URL:** `https://api.dfns.io`
-
-#### Tags
-
-- Networks
-- Fees
-- Blockchain Reads
-
-#### Properties
-
-- [Documentation](https://docs.dfns.co/d/api-docs/networks)
-- [OpenAPI](openapi/dfns-openapi.yml) — [OpenAPI Specification](https://spec.openapis.org/oas/latest.html)
-- [Postman Collection](collections/dfns.postman_collection.json) — [Postman Collection 2.1](https://schema.getpostman.com/json/collection/v2.1.0/collection.json)
-- [Open Collection](collections/dfns.opencollection.json) — [Open Collection 1.0](https://schema.opencollection.com/opencollection/v1.0.0.json)
-
-## Common Properties
-
-- [GitHub Organization](https://github.com/dfns)
-- [LinkedIn](https://www.linkedin.com/company/dfns)
 - [Website](https://www.dfns.co/)
 - [Documentation](https://docs.dfns.co/)
-- [Plans](plans/dfns-plans-pricing.yml)
-- [Rate Limits](rate-limits/dfns-rate-limits.yml)
-- [Fin Ops](finops/dfns-finops.yml)
+- [Blog](https://dfns.co/blog)
+- [GitHub](https://github.com/dfns)
 
-## Maintainers
+## API Evangelist rating
 
-**FN:** Kin Lane
-**Email:** kin@apievangelist.com
+**Kin Score 25.6** — emerging · rubric 0.24.0 · scored 2026-10-17
+
+| Facet | Score |
+|---|---|
+| Discoverability | 66.1 |
+| Contract quality | 46.8 |
+| Contract governance | 0.0 |
+| Operational transparency | 10.5 |
+| Developer ergonomics | 32.1 |
+| Access clarity | 7.9 |
+
+**Agent readiness 20.4** — agent-aware
+
+| Agent-readiness dimension | Result |
+|---|---|
+| Spec Presence | yes |
+| Agentic Access | derived (partial credit) |
+| Reversibility Documented | — |
+| MCP Server | — |
+| Auth Clarity | bearer (partial credit) |
+| Idempotency | — |
+| Error Semantics | — |
+| OpenAPI Examples | partial |
+| Rate Limit Signal | derived (partial credit) |
+| Event Surface Described | — |
+| Agent Skills | — |
+| Well Known Catalog | — |
+| Consent Identity | — |
+| Agent Card | — |
+| Dry Run Mode | — |
+| Delegated Identity | — |
+| Protected Resource Metadata | — |
+| Dynamic Client Registration | — |
+| Agentic Commerce | — |
+
+**Regulatory alignment 10.7** — Payments
+
+The rubric is published at [github.com/api-evangelist/kin-score](https://github.com/api-evangelist/kin-score). The per-check breakdown behind these numbers — which checks were earned, partial or missed — along with score history and how this provider compares to its peers, is available at [apis.io/providers/dfns/](https://apis.io/providers/dfns/).
+
+## How this profile is made
+
+API Evangelist profiles a company's public API surface the way a developer would find it: the website, developer portal and documentation, the specifications it publishes, its public repositories, and its pricing, status and changelog pages. From that it derives the properties above — contracts split per API, workflows, schemas, collections, governance rules, plans and rate limits — and scores them against the published [Kin Score rubric](https://github.com/api-evangelist/kin-score).
+
+The artifacts are published on [APIs.io](https://apis.io), not in this repository. This repository is the public record for Dfns: the place to say something is wrong, missing or out of date, and to ask for a re-score or a removal.
+
+## Open an issue
+
+- **Something about this listing** — a wrong description, a missing API, a stale artifact or a question about the rating: [open an issue on this repository](https://github.com/api-evangelist/dfns/issues/new).
+- **A new API, or one that is not in the catalog yet** — [submit it on APIs.io](https://apis.io/add/).
+- **Anything else** — [the APIs.io inbox](https://github.com/api-search/inbox/issues/new) or [info@apievangelist.com](mailto:info@apievangelist.com).
